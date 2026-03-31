@@ -23,13 +23,45 @@ The official WPS 365 CLI tool — a command-line gateway for developers and AI A
 
 ## Installation & Quick Start
 
-### Requirements
-
-- Go `1.25`+
-
 ### Install
 
-**Download from release page**
+**macOS / Linux**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
+```
+
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+```
+
+**Windows (Git Bash)**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
+```
+
+Customize via environment variables:
+
+```bash
+# Install a specific version
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.0.2 bash
+
+# Custom install directory
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
+```
+
+```powershell
+# PowerShell: install a specific version
+$env:WPS365_VERSION="v0.0.2"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+
+# PowerShell: custom install directory
+$env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+```
+
+**Manual download**
 
 [Release Page](https://github.com/wps365-open/cli/releases) 
 
