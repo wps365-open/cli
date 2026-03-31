@@ -88,10 +88,9 @@ Semantic parameters, smart defaults, automatic auth constraint validation — fr
 
 ```bash
 wps365-cli user me
-wps365-cli calendar events create --calendar-id primary \
+wps365-cli calendar events create primary \
   --name "Weekly Sync" --from "2024-01-15T14:00:00+08:00" --to "2024-01-15T15:00:00+08:00"
 wps365-cli im messages send --to u1 --to u2 --text "hello"
-wps365-cli drive files list --drive-id <id> --page-size 20
 ```
 
 Run `wps365-cli <resource> --help` to see all subcommands.
@@ -102,13 +101,8 @@ Call any WPS 365 Open Platform endpoint directly, covering all APIs.
 
 ```bash
 wps365-cli api get "/v7/users/current"
-wps365-cli api post "/v7/messages/batch_create" \
-  --token-type app \
-  --json '{
-    "type": "text",
-    "receivers": [{"type": "user", "receiver_ids": ["u1"]}],
-    "content": {"text": {"type": "plain", "content": "hello"}}
-  }'
+wps365-cli api post "/v7/calendars/create" \
+  --data '{"summary": "Project Calendar"}'
 ```
 
 ## Authentication
