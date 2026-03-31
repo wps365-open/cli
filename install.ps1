@@ -39,12 +39,36 @@
         Write-Host "▸ 正在获取最新版本号..." -ForegroundColor Cyan
         $version = $null
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $apiUrl = "https://api.github.com/repos/$Repo/releases/latest"
+
+        # Method 1: GitHub API
         $prevPref = $ErrorActionPreference
         $ErrorActionPreference = "SilentlyContinue"
-        $body = Invoke-RestMethod -Uri $apiUrl 2>$null
+        $body = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" 2>$null
         $ErrorActionPreference = $prevPref
         if ($body) { $version = $body.tag_name }
+
+        # Method 2: follow /releases/latest redirect
+        if (-not $version) {
+            $prevPref = $ErrorActionPreference
+            $ErrorActionPreference = "SilentlyContinue"
+            $resp = Invoke-WebRequest -Uri "$GitHubBase/latest" -UseBasicParsing -MaximumRedirection 5 2>$null
+            $ErrorActionPreference = $prevPref
+            if ($resp -and $resp.BaseResponse) {
+                $finalUrl = "$($resp.BaseResponse.ResponseUri)"
+                if (-not $finalUrl) { $finalUrl = "$($resp.BaseResponse.RequestMessage.RequestUri)" }
+                if ($finalUrl -match '/tag/([^/]+)$') { $version = $Matches[1] }
+            }
+        }
+
+        # Method 3: parse HTML from releases page
+        if (-not $version) {
+            $prevPref = $ErrorActionPreference
+            $ErrorActionPreference = "SilentlyContinue"
+            $html = Invoke-WebRequest -Uri "$GitHubBase" -UseBasicParsing 2>$null
+            $ErrorActionPreference = $prevPref
+            if ($html -and $html.Content -match '/releases/tag/([^"]+)') { $version = $Matches[1] }
+        }
+
         if (-not $version) { Write-Host "✘ 无法获取最新版本信息，请检查网络连接" -ForegroundColor Red; return }
         Write-Host "▸ 最新版本: $version" -ForegroundColor Cyan
     }
