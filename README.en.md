@@ -31,8 +31,7 @@ The official WPS 365 CLI tool — a command-line gateway for developers and AI A
 
 **Download from release page**
 
-https://github.com/wps365-open/cli/releases
-
+[Release Page](https://github.com/wps365-open/cli/releases) 
 
 ### Three Steps to Start
 
