@@ -182,19 +182,6 @@ wps365-cli --dry-run api get "/v7/users/current"
 wps365-cli --dry-run -o json im messages send --to u1 --text "hello"
 ```
 
-### Spec 管理
-
-运行时命令来源于本地 spec 文件，支持自定义扩展。装配优先级：`自定义命令 > 365 命令 > x-cli-name`。
-
-```bash
-wps365-cli spec path        # 查看 spec 目录位置
-wps365-cli spec status      # 查看当前 spec 状态
-
-wps365-cli spec set --api ./specs/api.yaml
-wps365-cli spec set --curated ./specs/curated.yaml
-wps365-cli spec add --custom-api ./my-api.yaml
-wps365-cli spec add --custom-curated ./my-curated.yaml
-```
 
 ### 环境变量
 
