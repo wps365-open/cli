@@ -67,6 +67,8 @@ $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365
 
 ### 三步开始
 
+> 首次使用前需要在 WPS 365 开放平台完成应用创建与权限配置，详见 [前置准备：创建应用与权限配置](docs/prerequisites.md)。
+
 ```bash
 # 1. 配置 OAuth 客户端凭证（仅需一次，交互式引导）
 wps365-cli auth setup

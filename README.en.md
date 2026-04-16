@@ -67,6 +67,8 @@ $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365
 
 ### Three Steps to Start
 
+> Before first use, you need to create an app and configure permissions on the WPS 365 Open Platform. See [Prerequisites: App Creation & Permission Setup](docs/prerequisites.md) for details.
+
 ```bash
 # 1. Configure OAuth client credentials (one-time, interactive guided setup)
 wps365-cli auth setup
