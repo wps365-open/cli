@@ -11,15 +11,19 @@ The official WPS 365 CLI tool — a command-line gateway for developers and AI A
 
 ## Features
 
-| Category | Capabilities |
-|----------|-------------|
-| 📅 Calendar | List calendars, create/update/delete events, manage attendees & rooms, free/busy queries, time-off events, batch operations |
-| 💬 Messenger | Send/reply/recall messages, chat CRUD, member management, message lists, urgent messages, bookmarks |
-| 👤 Contacts | Current user, user list, search by name/email/phone, batch queries, department & offboarding management |
-| 📧 Mail | Mailbox management, folder browsing, message list/detail/search, send & drafts, mail groups & contacts |
-| 📁 Drive | Drive management, file list/upload/download/search, batch operations, permissions, versions, share links |
-| 📋 DbSheet | Table/field/view management, record CRUD & search, dashboards, webhooks, attachments |
-| 🎥 Meetings | Online meeting management, participant management, reservations, minutes & recordings, room & level management |
+The current release (v0.2.0) provides **101 curated commands** across 7 business domains:
+
+| Category | Commands | Capabilities |
+|----------|:--------:|-------------|
+| 📅 Calendar | 25 | Calendar CRUD & subscription, event CRUD & search, attendees, rooms, free/busy, minutes |
+| 💬 Messenger | 15 | Send/reply/recall messages, chat CRUD, member management, message history, P2P chat, unread count |
+| 👤 Contacts | 5 | Current user, user list & search, department list |
+| 📧 Mail | 8 | Mailbox management, folder browsing, message list/detail/search, drafts |
+| 📁 Drive | 21 | Drive management, file CRUD & search, batch copy/move, versions, share links |
+| 📋 DbSheet | 14 | Table/field management, record CRUD & search |
+| 🎥 Meetings | 13 | Meeting management, participants, minutes & recordings |
+
+> Uncovered endpoints are accessible via `api get|post` for full API coverage.
 
 ## Installation & Quick Start
 
@@ -90,16 +94,16 @@ Semantic parameters, smart defaults, automatic auth constraint validation — fr
 
 ```bash
 wps365-cli user me
-wps365-cli calendar events create primary \
+wps365-cli calendar event create primary \
   --name "Weekly Sync" --from "2024-01-15T14:00:00+08:00" --to "2024-01-15T15:00:00+08:00"
-wps365-cli im messages send --to u1 --to u2 --text "hello"
+wps365-cli im message send --to u1 --to u2 --text "hello"
 ```
 
 Run `wps365-cli <resource> --help` to see all subcommands.
 
 ### 2. Raw API Calls
 
-Call any WPS 365 Open Platform endpoint directly, covering all APIs.
+Uncovered endpoints are accessible via `api get|post` to call any WPS 365 Open Platform endpoint directly:
 
 ```bash
 wps365-cli api get "/v7/users/current"
@@ -109,19 +113,21 @@ wps365-cli api post "/v7/calendars/create" \
 
 ## Authentication
 
-| Command | Description |
-|---------|-------------|
-| `auth setup` | Configure OAuth client credentials (interactive, supports CLI flags and env vars) |
-| `auth login` | Log in with `--scopes` for user identity, or `--app` for application identity |
-| `auth token` | View current token info |
-| `auth status` | View authentication status |
+| Command | Description | Use Case |
+|---------|-------------|----------|
+| `auth setup` | Configure OAuth client credentials | First-time setup, interactive guided |
+| `auth login` | Log in with `--scopes` | Browser-based OAuth user authorization |
+| `auth status` | View authentication status | Check token validity and expiry |
+| `auth token` | Output current access token | Pass to external tools: `curl -H "Authorization: Bearer $(wps365-cli auth token)"` |
+| `auth logout` | Remove local tokens | Sign out; credentials retained for re-login |
+| `auth clean` | Clear all auth data | Full reset; requires `auth setup` again |
 
 ### Auth Modes
 
 | Mode | Description | Acquisition |
 |------|-------------|-------------|
 | `delegated` | User authorization, for user-scoped endpoints (current user, personal tasks, etc.) | `auth login --scopes "..."` |
-| `app` | Application identity, for server-to-server or app-only endpoints | `auth login --app` |
+| `app` | Application identity, for server-to-server or app-only endpoints | Set `WPS365_CLIENT_ID` + `WPS365_CLIENT_SECRET` env vars; CLI auto-acquires token |
 
 Commands automatically select the compatible auth mode based on OpenAPI `security`. Use `--token-type` to override explicitly. Incompatible overrides produce an error rather than silently switching.
 
@@ -129,13 +135,10 @@ Commands automatically select the compatible auth mode based on OpenAPI `securit
 # Delegated login (browser-based OAuth)
 wps365-cli auth login --scopes "kso.user_base.read,kso.calendar.read"
 
-# App login (client credentials grant)
-wps365-cli auth login --app
-
-# Non-interactive (CI/CD)
+# App identity (CI/CD — no login needed, uses env vars)
 export WPS365_CLIENT_ID="<client-id>"
 export WPS365_CLIENT_SECRET="<client-secret>"
-wps365-cli auth login --app
+wps365-cli user list   # auto-acquires app token via client_credentials
 ```
 
 ## Advanced Usage
@@ -147,11 +150,27 @@ wps365-cli auth login --app
 -o yaml      # YAML
 -o table     # Human-readable table
 -o tsv       # Tab-separated (for piping)
+-o ndjson    # Newline-delimited JSON (for streaming)
+-o csv       # CSV format
 ```
 
 ```bash
 wps365-cli -o yaml user me
 wps365-cli -o table calendar list
+wps365-cli -o csv dbsheet record list --file-id <id> --sheet-id <id>
+```
+
+### Output Pipeline
+
+```bash
+# Built-in jq filter (no external jq required)
+wps365-cli user me --jq '.name'
+
+# Flatten nested objects for columnar outputs
+wps365-cli -o table drive file list --flatten
+
+# Disable colorized output (for logs or CI)
+wps365-cli --no-color user list
 ```
 
 ### Dry Run
@@ -161,7 +180,7 @@ Preview requests without sending, useful for debugging and script validation:
 ```bash
 wps365-cli --dry-run user me
 wps365-cli --dry-run api get "/v7/users/current"
-wps365-cli --dry-run -o json im messages send --to u1 --text "hello"
+wps365-cli --dry-run -o json im message send --to u1 --text "hello"
 ```
 
 
@@ -187,8 +206,8 @@ wps365-cli --dry-run -o json im messages send --to u1 --text "hello"
 
 `client_secret` and tokens are stored in a secure backend — plaintext never touches disk:
 
-- **Keychain** (default on macOS): uses system Keychain
-- **Encrypted file**: provide a key via `WPS365_KEYRING_PASSWORD`, encrypted with AES-256-GCM
+- **Keychain** (macOS/Windows default): uses system Keychain / Credential Manager
+- **Encrypted file** (Linux default): AES-256-GCM encrypted. Auto-generates a random key when `WPS365_KEYRING_PASSWORD` is not set
 
 Token lifecycle is fully automatic:
 
@@ -196,16 +215,6 @@ Token lifecycle is fully automatic:
 - 401 responses trigger transparent refresh and retry
 - Delegated tokens are refreshed via refresh_token; if the refresh token itself expires, the CLI prompts to `auth login` again
 - App tokens are re-acquired via client_credentials when expired
-
-
-### Related Documentation
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Project architecture and directory responsibilities
-- [docs/design-docs/auth.md](docs/design-docs/auth.md) — Authentication and credential design
-- [docs/design-docs/spec-discovery.md](docs/design-docs/spec-discovery.md) — Spec file management and loading order
-- [docs/design-docs/curated-commands.md](docs/design-docs/curated-commands.md) — Curated command design principles
-- [docs/design-docs/openapi-cli-mapping.md](docs/design-docs/openapi-cli-mapping.md) — Command-to-API mapping rules
-- [docs/design-docs/testing.md](docs/design-docs/testing.md) — Testing strategy and E2E constraints
 
 ## Contributing
 
