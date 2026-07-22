@@ -2,6 +2,29 @@
 
 本文件记录 WPS365 CLI 各版本的主要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v0.3.0] - 2026-07-22
+
+### 新增
+
+- `config init`：浏览器一键完成开放平台应用创建/绑定，自动写入 `client_id` / `client_secret`（公网推荐首次配置路径）
+- OAuth2 Device Authorization Grant（`auth login --device`），适配远程 / WSL / CI 等无本地回调场景
+- Device 登录可按需省略 `--scopes`
+- 用户文档：同步中英文 README 与使用指南，补充 `config init` / `auth setup` FAQ 与前置准备说明
+
+### 变更
+
+- 推荐快速开始改为：`config init` → `auth login --device` → `user me`（已有凭证仍可用 `auth setup`）
+- README 功能概览与认证命令表对齐当前产品能力
+- 安装示例指定版本改为 `WPS365_VERSION=v0.3.0`
+
+### 修复
+
+- **`auth setup` 旧 secret 不可读**：从安全存储读取已有 `client_secret` 失败（钥匙串不可用、密文损坏等，且非 NotFound）时不再中止；视为无旧值并继续写入，凭证变更时清理旧 token
+- **公网 scope**：去掉不存在的 `kso.file.search`，文件搜索路径仅使用 `kso.file_search.readwrite`
+- **`auth clean`**：同时清理 `client_id` 等相关配置，完整重置后需重新 `setup` / `config init`
+- **登录成功 JSON**：不再输出 `granted_scopes`
+- **`config init` 文案**：精简成功提示，减少用户文档中内部环境变量暴露
+
 ## [v0.2.0] - 2026-06-26
 
 ### ⚠️ 不兼容变更
@@ -161,3 +184,5 @@
 
 [v0.2.0]: https://github.com/wps365-open/cli/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/wps365-open/cli/releases/tag/v0.1.0
+
+[v0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0

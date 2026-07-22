@@ -7,7 +7,7 @@
 
 WPS 365 官方 CLI 工具 — 面向开发者与 AI Agent 的命令行入口。覆盖日历、协作、通讯录、邮箱、云文档、多维表、会议等 7 大业务域，未覆盖的接口通过 `api get|post` 直接访问。
 
-[安装](#安装与快速开始) · [命令](#双轨命令体系) · [认证](#认证) · [进阶用法](#进阶用法) · [安全](#凭证与安全) · [贡献](#贡献)
+[安装](#安装与快速开始) · [前置准备](#前置准备) · [命令](#双轨命令体系) · [认证](#认证) · [进阶用法](#进阶用法) · [安全](#凭证与安全) · [FAQ](#常见问题) · [贡献](#贡献)
 
 ## 功能
 
@@ -47,7 +47,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | b
 
 ```bash
 # 安装指定版本
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.0.2 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.0 bash
 
 # 自定义安装目录
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -55,7 +55,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | W
 
 ```powershell
 # PowerShell: 安装指定版本
-$env:WPS365_VERSION="v0.0.2"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.0"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
 # PowerShell: 自定义安装目录
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
@@ -63,22 +63,77 @@ $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365
 
 **手动下载**
 
-[Release 页面](https://github.com/wps365-open/cli/releases) 
+[Release 页面](https://github.com/wps365-open/cli/releases)
 
 ### 三步开始
 
-> 首次使用前需要在 WPS 365 开放平台完成应用创建与权限配置，详见 [前置准备：创建应用与权限配置](docs/prerequisites.md)。
-
 ```bash
-# 1. 配置 OAuth 客户端凭证（仅需一次，交互式引导）
-wps365-cli auth setup
+# 0. 安装（见上一节）
 
-# 2. 登录授权
-wps365-cli auth login --scopes "kso.user_base.read,kso.calendar.read"
+# 1. 新建/绑定应用（推荐，仅需一次）
+wps365-cli config init
+
+# 2. 登录授权（远程/WSL 推荐 --device）
+wps365-cli auth login --device
 
 # 3. 开始使用
 wps365-cli user me
 ```
+
+无法使用 `config init`？见下方 [路径 B：手动配置应用](#路径-b手动在开放平台配置进阶)。
+
+## 前置准备
+
+本节补充 `config init` 参数、排错，以及无法使用一键注册时的备选方案。
+
+### 路径 A：`config init`（推荐）
+
+公网用户无需事先在开放平台手动创建应用。
+
+```bash
+wps365-cli config init
+```
+
+流程：
+
+1. CLI 调用开放平台应用注册，输出浏览器链接（并尝试自动打开浏览器）
+2. 在浏览器中完成：验证身份 → 创建/绑定应用 → 授权确认（若已有应用会优先进入绑定页）
+3. CLI 轮询成功后，自动将 `client_id` 写入本地配置、`client_secret` 存入安全存储
+
+常用参数：
+
+| 参数 | 说明 |
+|------|------|
+| `--new` | 提示浏览器侧创建新应用 |
+| `--force` | 已存在绑定时跳过确认直接覆盖（非交互环境必须） |
+| `--debug` | 输出注册各步骤详细日志 |
+
+```bash
+wps365-cli config init --new
+wps365-cli config init --force
+wps365-cli config init --debug
+```
+
+完成后直接执行 `auth login`。
+
+### 路径 B：手动在开放平台配置（进阶）
+
+适用于已有企业自建应用、需精细控制权限审批，或无法使用 `config init` 的环境。
+
+整体流程：创建应用 → 获取凭证 → 添加回调地址 → 申请权限并提交发布 → 企业管理员审批 → 写入 CLI。
+
+1. 访问 [WPS 365 开放平台开发者后台](https://open.wps.cn/)，在「企业自建应用」中创建应用  
+2. 在应用 **基础信息 → 应用凭证** 记录应用 ID（`client_id`）与应用密钥（`client_secret`）  
+3. 在 **开发配置 → 安全设置** 添加回调地址：`http://localhost:18365/callback`  
+4. 在 **权限管理** 申请所需 scope，并在 **应用发布 → 版本管理** 创建版本、申请发布  
+5. 企业管理员在企业管理后台 **应用市场 → 应用审核** 审批通过  
+6. 写入 CLI 凭证：
+
+```bash
+wps365-cli auth setup
+```
+
+然后执行 `auth login`。更细的截图级说明见 [前置准备：创建应用与权限配置](docs/prerequisites.md)。
 
 ## 双轨命令体系
 
@@ -90,9 +145,11 @@ CLI 提供两种粒度的调用方式，精装命令覆盖高频场景，`api` �
 
 ```bash
 wps365-cli user me
-wps365-cli calendar event create primary \
-  --name "周会" --from "2024-01-15T14:00:00+08:00" --to "2024-01-15T15:00:00+08:00"
-wps365-cli im message send --to u1 --to u2 --text "hello"
+wps365-cli calendar events create primary \
+  --name "周会" \
+  --from "2026-07-21T14:00:00+08:00" \
+  --to "2026-07-21T15:00:00+08:00"
+wps365-cli im messages send --to u1 --to u2 --text "hello"
 ```
 
 运行 `wps365-cli <resource> --help` 查看所有子命令。
@@ -113,35 +170,37 @@ wps365-cli api post "/v7/calendars/create" \
 
 | 命令 | 说明 | 使用场景 |
 |------|------|----------|
+| `config init` | 一键应用注册 | 浏览器完成应用创建/绑定，自动将凭证写入 CLI |
 | `auth setup` | 配置 OAuth 客户端凭证 | 首次使用，交互式引导保存 `client_id` 和 `client_secret` |
-| `auth login` | 登录授权 | `--scopes` 指定权限进行用户授权（浏览器 OAuth） |
+| `auth login` | 登录授权 | `--scopes` 指定权限进行用户授权（浏览器 OAuth）；远程/WSL 可用 `--device` |
 | `auth status` | 查看认证状态 | 检查当前 token 是否有效、过期时间、认证模式等 |
 | `auth token` | 输出当前 access token | 将 token 传递给其他工具或脚本，如 `curl -H "Authorization: Bearer $(wps365-cli auth token)"` |
 | `auth logout` | 删除本地 token | 退出登录；凭证保留，可直接重新 `login` |
-| `auth clean` | 清理所有认证数据 | 凭证损坏或需要完全重置时使用；清除后需从 `setup` 重新开始 |
+| `auth clean` | 清理所有认证数据 | 凭证损坏或需要完全重置时使用；清除后需从 `setup` / `config init` 重新开始 |
 
 ```bash
-# 1. 首次配置（交互式引导）
-wps365-cli auth setup
+# 推荐：一键注册 + 设备码登录
+wps365-cli config init
+wps365-cli auth login --device
 
-# 2. 用户身份登录（浏览器 OAuth 授权）
+# 或指定 scopes 的浏览器回调登录
 wps365-cli auth login --scopes "kso.user_base.read,kso.calendar.read"
 
-# 3. 应用身份（CI/CD 场景，通过环境变量，无需 login）
+# 应用身份（CI/CD 场景，通过环境变量，无需 login）
 export WPS365_CLIENT_ID="<client-id>"
 export WPS365_CLIENT_SECRET="<client-secret>"
 wps365-cli user list   # 自动使用 client_credentials 获取 app token
 
-# 4. 查看当前认证状态
+# 查看当前认证状态
 wps365-cli auth status
 
-# 5. 将 token 传给其他工具
+# 将 token 传给其他工具
 curl -H "Authorization: Bearer $(wps365-cli auth token)" https://open.wps.cn/v7/users/current
 
-# 6. 退出登录（保留凭证，下次可直接 login）
+# 退出登录（保留凭证，下次可直接 login）
 wps365-cli auth logout
 
-# 7. 完全重置（清除所有 token、凭证和自动密钥）
+# 完全重置（清除所有 token、凭证和自动密钥）
 wps365-cli auth clean --force
 ```
 
@@ -149,7 +208,7 @@ wps365-cli auth clean --force
 
 | 模式 | 说明 | 获取方式 |
 |------|------|----------|
-| `delegated` | 用户授权身份，适用于当前用户、个人待办等用户态接口 | `auth login --scopes "..."` |
+| `delegated` | 用户授权身份，适用于当前用户、个人待办等用户态接口 | `auth login --scopes "..."` / `auth login --device` |
 | `app` | 应用身份，适用于服务端调用或应用态接口 | 设置 `WPS365_CLIENT_ID` + `WPS365_CLIENT_SECRET` 环境变量，CLI 自动获取 |
 
 命令根据底层 OpenAPI `security` 自动选择认证模式，`--token-type` 可显式覆盖。不兼容时直接报错，不静默切换。
@@ -196,7 +255,6 @@ wps365-cli --dry-run api get "/v7/users/current"
 wps365-cli --dry-run -o json im message send --to u1 --text "hello"
 ```
 
-
 ### 环境变量
 
 | 变量 | 用途 |
@@ -229,6 +287,27 @@ Token 生命周期完全自动管理：
 - delegated token 通过 refresh_token 刷新；refresh token 过期时提示重新 `auth login`
 - app token 过期时自动通过 client_credentials 重新获取
 
+## 常见问题
+
+**Q：`config init` 一直显示 Waiting for binding？**  
+请确认浏览器侧已完成全部步骤，尤其是最后的授权确认。仅创建/绑定应用而未授权，CLI 会持续 pending 直到会话过期。
+
+**Q：`config init` 和 `auth setup` 有什么区别？**
+
+| | `config init` | `auth setup` |
+|--|---------------|--------------|
+| 适用场景 | 首次使用、快速上手 | 已有凭证、手动管理 |
+| 操作方式 | 浏览器引导，自动获取 AK/SK | 交互式输入或环境变量注入 |
+| 存储位置 | 相同（`config.json` + 安全存储） | 相同 |
+
+**Q：权限申请后为什么没有生效？**  
+需要完成「创建版本 → 申请发布 → 企业管理员审批」。仅申请权限而不提交版本审批，权限会一直处于「待提交审核」。
+
+**Q：通讯录接口返回空数据或权限错误？**  
+除「能力权限」外，部分接口还需配置「可用范围」和「数据权限」，请在应用详情页的权限管理中检查。
+
+**Q：`CLIENT_SECRET` 泄露了怎么办？**  
+在开发者后台「应用凭证」区域重置密钥，旧密钥立即失效；然后重新执行 `config init` 或 `auth setup`。
 
 ## 贡献
 
