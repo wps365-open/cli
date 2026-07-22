@@ -2,6 +2,18 @@
 
 本文件记录 WPS365 CLI 各版本的主要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [Unreleased]
+
+## [v0.3.1] - 2026-07-22
+
+### 修复
+
+- README 精装命令示例对齐当前 CLI：`calendar event create` 使用 `--start`/`--end`；`im message send` 使用逗号分隔的 `--to`
+
+### 变更
+
+- 安装示例指定版本改为 `WPS365_VERSION=v0.3.1`
+
 ## [v0.3.0] - 2026-07-22
 
 ### 新增
@@ -182,7 +194,7 @@
 - 跨平台安装脚本（bash / PowerShell）
 - 安全凭证存储（Keychain / AES-256-GCM 加密文件）
 
+[v0.3.1]: https://github.com/wps365-open/cli/releases/tag/v0.3.1
+[v0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/wps365-open/cli/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/wps365-open/cli/releases/tag/v0.1.0
-
-[v0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0
