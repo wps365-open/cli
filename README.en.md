@@ -51,7 +51,7 @@ Customize via environment variables:
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.0 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.1 bash
 
 # Custom install directory
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -59,7 +59,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | W
 
 ```powershell
 # PowerShell: install a specific version
-$env:WPS365_VERSION="v0.3.0"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.1"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
 # PowerShell: custom install directory
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
@@ -149,11 +149,11 @@ Semantic parameters, smart defaults, automatic auth constraint validation — fr
 
 ```bash
 wps365-cli user me
-wps365-cli calendar events create primary \
+wps365-cli calendar event create primary \
   --name "Weekly Sync" \
-  --from "2026-07-21T14:00:00+08:00" \
-  --to "2026-07-21T15:00:00+08:00"
-wps365-cli im messages send --to u1 --to u2 --text "hello"
+  --start "2026-07-21T14:00:00+08:00" \
+  --end "2026-07-21T15:00:00+08:00"
+wps365-cli im message send --to "u1,u2" --text "hello"
 ```
 
 Run `wps365-cli <resource> --help` to see all subcommands.

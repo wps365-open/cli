@@ -47,7 +47,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | b
 
 ```bash
 # 安装指定版本
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.0 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.1 bash
 
 # 自定义安装目录
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -55,7 +55,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | W
 
 ```powershell
 # PowerShell: 安装指定版本
-$env:WPS365_VERSION="v0.3.0"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.1"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
 # PowerShell: 自定义安装目录
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
@@ -145,11 +145,11 @@ CLI 提供两种粒度的调用方式，精装命令覆盖高频场景，`api` �
 
 ```bash
 wps365-cli user me
-wps365-cli calendar events create primary \
+wps365-cli calendar event create primary \
   --name "周会" \
-  --from "2026-07-21T14:00:00+08:00" \
-  --to "2026-07-21T15:00:00+08:00"
-wps365-cli im messages send --to u1 --to u2 --text "hello"
+  --start "2026-07-21T14:00:00+08:00" \
+  --end "2026-07-21T15:00:00+08:00"
+wps365-cli im message send --to "u1,u2" --text "hello"
 ```
 
 运行 `wps365-cli <resource> --help` 查看所有子命令。
