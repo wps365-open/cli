@@ -7,7 +7,9 @@
 
 The official WPS 365 CLI tool — a command-line gateway for developers and AI Agents. Covers 7 business domains including Calendar, Messenger, Contacts, Mail, Drive, DbSheet, and Meetings. Uncovered endpoints are accessible via `api get|post`.
 
-[Install](#installation--quick-start) · [Prerequisites](#prerequisites) · [Commands](#dual-track-command-system) · [Auth](#authentication) · [Advanced](#advanced-usage) · [Security](#credentials--security) · [FAQ](#faq) · [Contributing](#contributing)
+For more complete installation, authentication, and command usage details, see the [WPS 365 CLI User Guide](https://365.kdocs.cn/wiki/l/0lcqi8RexYzQKD) (Chinese).
+
+[Install](#installation--quick-start) · [Prerequisites](#prerequisites) · [Commands](#dual-track-command-system) · [Auth](#authentication) · [Advanced](#advanced-usage) · [Security](#credentials--security) · [FAQ](#faq) · [User Guide](https://365.kdocs.cn/wiki/l/0lcqi8RexYzQKD) · [Contributing](#contributing)
 
 ## Features
 
