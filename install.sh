@@ -5,10 +5,10 @@ REPO="wps365-open/cli"
 BINARY_NAME="wps365-cli"
 GITHUB_BASE="https://github.com/${REPO}/releases"
 
-# Windows (Git Bash / MINGW) 使用用户目录，其他系统使用 /usr/local/bin
+# Windows (Git Bash / MINGW) 使用用户目录；macOS / Linux 使用 ~/.local/bin（无需 sudo）
 case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*) _DEFAULT_DIR="$HOME/.wps365/bin" ;;
-    *)                    _DEFAULT_DIR="/usr/local/bin" ;;
+    *)                    _DEFAULT_DIR="${HOME}/.local/bin" ;;
 esac
 INSTALL_DIR="${WPS365_INSTALL_DIR:-$_DEFAULT_DIR}"
 TMPDIR_CLEANUP=""

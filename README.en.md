@@ -49,7 +49,7 @@ irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
 ```
 
-Customize via environment variables:
+macOS / Linux install to `~/.local/bin` by default (no sudo). Customize via environment variables:
 
 ```bash
 # Install a specific version

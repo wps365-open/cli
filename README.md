@@ -45,7 +45,7 @@ irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
 ```
 
-可通过环境变量自定义：
+macOS / Linux 默认安装到 `~/.local/bin`（无需 sudo）。可通过环境变量自定义：
 
 ```bash
 # 安装指定版本
