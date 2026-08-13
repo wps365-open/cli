@@ -49,7 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | b
 
 ```bash
 # 安装指定版本
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.1 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.2 bash
 
 # 自定义安装目录
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -57,7 +57,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | W
 
 ```powershell
 # PowerShell: 安装指定版本
-$env:WPS365_VERSION="v0.3.1"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.2"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
 # PowerShell: 自定义安装目录
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex

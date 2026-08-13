@@ -4,9 +4,15 @@
 
 ## [Unreleased]
 
+## [v0.3.2] - 2026-08-13
+
 ### 新增
 
 - 业务 API HTTP 超时可配置：全局 `--timeout`、环境变量 `WPS365_TIMEOUT`、`config set timeout`（如 `2m`/`2min`，默认 `30s`；`0`/`none`/`unlimited` 表示不限制）
+
+### 变更
+
+- 安装示例指定版本改为 `WPS365_VERSION=v0.3.2`
 
 ## [v0.3.1] - 2026-07-22
 
@@ -198,6 +204,7 @@
 - 跨平台安装脚本（bash / PowerShell）
 - 安全凭证存储（Keychain / AES-256-GCM 加密文件）
 
+[v0.3.2]: https://github.com/wps365-open/cli/releases/tag/v0.3.2
 [v0.3.1]: https://github.com/wps365-open/cli/releases/tag/v0.3.1
 [v0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/wps365-open/cli/releases/tag/v0.2.0
