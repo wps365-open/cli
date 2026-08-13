@@ -261,6 +261,16 @@ wps365-cli --dry-run api get "/v7/users/current"
 wps365-cli --dry-run -o json im message send --to u1 --text "hello"
 ```
 
+### HTTP Timeout
+
+Business API calls time out after 30s by default. Override with `--timeout`, `WPS365_TIMEOUT`, or `config set timeout`. `0` / `none` / `unlimited` disables the limit.
+
+```bash
+wps365-cli --timeout 2m user me
+wps365-cli --timeout 0 api get "/v7/users/current"
+wps365-cli config set timeout 2m
+```
+
 ### Environment Variables
 
 | Variable | Purpose |
@@ -270,6 +280,7 @@ wps365-cli --dry-run -o json im message send --to u1 --text "hello"
 | `WPS365_AUTH` | Default auth mode (`app` / `delegated`) |
 | `WPS365_ACCESS_TOKEN` | Direct access token injection (bypasses store and refresh) |
 | `WPS365_API_BASE` | API base URL |
+| `WPS365_TIMEOUT` | Business API HTTP timeout (e.g. `60s`, `2m`; `0`/`none` = no limit). Default `30s` |
 | `WPS365_AUTH_URL` | Custom OAuth authorization endpoint |
 | `WPS365_TOKEN_URL` | Custom OAuth token endpoint |
 | `WPS365_REDIRECT_URI` | OAuth redirect URI |

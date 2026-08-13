@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 新增
+
+- 业务 API HTTP 超时可配置：全局 `--timeout`、环境变量 `WPS365_TIMEOUT`、`config set timeout`（如 `2m`/`2min`，默认 `30s`；`0`/`none`/`unlimited` 表示不限制）
+
 ## [v0.3.1] - 2026-07-22
 
 ### 修复

@@ -257,6 +257,16 @@ wps365-cli --dry-run api get "/v7/users/current"
 wps365-cli --dry-run -o json im message send --to u1 --text "hello"
 ```
 
+### HTTP 超时
+
+业务 API 请求默认 30 秒超时，可用 `--timeout`、环境变量 `WPS365_TIMEOUT` 或 `config set timeout` 调整。`0` / `none` / `unlimited` 表示不限制。
+
+```bash
+wps365-cli --timeout 2m user me
+wps365-cli --timeout 0 api get "/v7/users/current"
+wps365-cli config set timeout 2m
+```
+
 ### 环境变量
 
 | 变量 | 用途 |
@@ -266,6 +276,7 @@ wps365-cli --dry-run -o json im message send --to u1 --text "hello"
 | `WPS365_AUTH` | 默认认证模式（`app` / `delegated`） |
 | `WPS365_ACCESS_TOKEN` | 直接注入 access token（跳过存储和刷新） |
 | `WPS365_API_BASE` | API 基础地址 |
+| `WPS365_TIMEOUT` | 业务 API HTTP 超时（如 `60s`、`2m`；`0`/`none` 表示不限制），默认 `30s` |
 | `WPS365_AUTH_URL` | 自定义 OAuth 授权端点 |
 | `WPS365_TOKEN_URL` | 自定义 OAuth token 端点 |
 | `WPS365_REDIRECT_URI` | OAuth 回调地址 |
