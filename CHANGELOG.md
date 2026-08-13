@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 变更
+
+- macOS / Linux 默认安装目录从 `/usr/local/bin` 改为 `~/.local/bin`，无需 sudo
+
 ## [v0.3.2] - 2026-08-13
 
 ### 新增
