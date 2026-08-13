@@ -52,7 +52,7 @@ macOS / Linux 默认安装到 `~/.local/bin`（无需 sudo）。可通过环境�
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.2 bash
 
 # 自定义安装目录
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=/usr/local/bin bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
 ```
 
 ```powershell
