@@ -4,9 +4,20 @@
 
 ## [Unreleased]
 
+## [v0.3.3] - 2026-08-20
+
+### 新增
+
+- 精装命令：`drive doclib list` / `drive doclib get`，查询当前用户有权限的文档库/团队文档
+- 精装命令：智能文档 `airpage`（创建/读取、v2 块读写、OTL JSON 导入、导出 docx/json）
+- 精装命令：智能表格 `airsheet`（创建文件、工作表、选区读写/查找、追加行）
+- `airpage block create --content "一段字"` 即可写入正文（v2 JSON，无需 v1 `--arg`）
+
 ### 变更
 
 - macOS / Linux 默认安装目录从 `/usr/local/bin` 改为 `~/.local/bin`，无需 sudo
+- 安装示例指定版本改为 `WPS365_VERSION=v0.3.3`
+- 功能覆盖从 7 个业务域扩展到 9 个（新增智能文档、智能表格；云文档增加文档库）
 
 ## [v0.3.2] - 2026-08-13
 
@@ -208,6 +219,7 @@
 - 跨平台安装脚本（bash / PowerShell）
 - 安全凭证存储（Keychain / AES-256-GCM 加密文件）
 
+[v0.3.3]: https://github.com/wps365-open/cli/releases/tag/v0.3.3
 [v0.3.2]: https://github.com/wps365-open/cli/releases/tag/v0.3.2
 [v0.3.1]: https://github.com/wps365-open/cli/releases/tag/v0.3.1
 [v0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0

@@ -5,7 +5,7 @@
 
 中文 | [English](README.en.md)
 
-WPS 365 官方 CLI 工具 — 面向开发者与 AI Agent 的命令行入口。覆盖日历、协作、通讯录、邮箱、云文档、多维表、会议等 7 大业务域，未覆盖的接口通过 `api get|post` 直接访问。
+WPS 365 官方 CLI 工具 — 面向开发者与 AI Agent 的命令行入口。覆盖日历、即时通讯、通讯录、邮箱、云文档、智能文档、智能表格、多维表、会议 9 大业务域；未覆盖的接口通过 `api` 命令直接访问。
 
 更完整的安装、认证与命令用法，请参阅 [WPS 365 CLI 使用指南](https://365.kdocs.cn/wiki/l/0lcqi8RexYzQKD)。
 
@@ -17,9 +17,11 @@ WPS 365 官方 CLI 工具 — 面向开发者与 AI Agent 的命令行入口。�
 |------|------|
 | 📅 日历 | 日历增删改查与订阅、日程增删改查/搜索、参与者管理、会议室管理、忙闲查询、会议纪要、重复日程实例 |
 | 💬 即时通讯 | 发送/回复/撤回消息、群聊增删改查、成员管理、消息列表、P2P 会话、未读数 |
-| 👤 通讯录 | 查询当前用户、用户列表与搜索、部门列表 |
+| 👤 通讯录 | 查询当前用户、用户列表与搜索 |
 | 📧 邮箱 | 邮箱管理、文件夹浏览、邮件列表/详情/搜索、发送与草稿 |
-| 📁 云文档 | 驱动器管理、文件增删改查/搜索、批量复制/移动、版本管理、分享链接 |
+| 📁 云文档 | 驱动器管理、文档库/团队文档、文件增删改查/搜索、批量复制/移动、版本管理、分享链接 |
+| 📝 智能文档 | 创建/读取智能文档、v2 块读写（`--content` 写入纯文本）、OTL JSON 导入、导出 docx/json |
+| 📊 智能表格 | 创建智能表格、工作表、选区读写/查找、追加行 |
 | 📋 多维表 | 数据表/字段管理、记录增删改查与搜索 |
 | 🎥 会议 | 在线会议管理、参会人管理、会议纪要与录制 |
 
@@ -49,7 +51,7 @@ macOS / Linux 默认安装到 `~/.local/bin`（无需 sudo）。可通过环境�
 
 ```bash
 # 安装指定版本
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.2 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.3 bash
 
 # 自定义安装目录
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -57,7 +59,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | W
 
 ```powershell
 # PowerShell: 安装指定版本
-$env:WPS365_VERSION="v0.3.2"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.3"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
 # PowerShell: 自定义安装目录
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex

@@ -5,7 +5,7 @@
 
 [中文](README.md) | English
 
-The official WPS 365 CLI tool — a command-line gateway for developers and AI Agents. Covers 7 business domains including Calendar, Messenger, Contacts, Mail, Drive, DbSheet, and Meetings. Uncovered endpoints are accessible via `api get|post`.
+The official WPS 365 CLI tool — a command-line gateway for developers and AI Agents. Covers 9 business domains including Calendar, Messenger, Contacts, Mail, Drive, AirPage, AirSheet, DbSheet, and Meetings. Uncovered endpoints are accessible via `api`.
 
 For more complete installation, authentication, and command usage details, see the [WPS 365 CLI User Guide](https://365.kdocs.cn/wiki/l/0lcqi8RexYzQKD) (Chinese).
 
@@ -13,17 +13,19 @@ For more complete installation, authentication, and command usage details, see t
 
 ## Features
 
-The current release provides **101 curated commands** across 7 business domains:
+The current release provides curated commands across 9 business domains:
 
-| Category | Commands | Capabilities |
-|----------|:--------:|-------------|
-| 📅 Calendar | 25 | Calendar CRUD & subscription, event CRUD & search, attendees, rooms, free/busy, minutes |
-| 💬 Messenger | 15 | Send/reply/recall messages, chat CRUD, member management, message history, P2P chat, unread count |
-| 👤 Contacts | 5 | Current user, user list & search, department list |
-| 📧 Mail | 8 | Mailbox management, folder browsing, message list/detail/search, drafts |
-| 📁 Drive | 21 | Drive management, file CRUD & search, batch copy/move, versions, share links |
-| 📋 DbSheet | 14 | Table/field management, record CRUD & search |
-| 🎥 Meetings | 13 | Meeting management, participants, minutes & recordings |
+| Category | Capabilities |
+|----------|-------------|
+| 📅 Calendar | Calendar CRUD & subscription, event CRUD & search, attendees, rooms, free/busy, minutes |
+| 💬 Messenger | Send/reply/recall messages, chat CRUD, member management, message history, P2P chat, unread count |
+| 👤 Contacts | Current user, user list & search |
+| 📧 Mail | Mailbox management, folder browsing, message list/detail/search, drafts |
+| 📁 Drive | Drive management, document libraries, file CRUD & search, batch copy/move, versions, share links |
+| 📝 AirPage | Create/read AirPage files, v2 block read/write (`--content` for plain text), OTL JSON import, export docx/json |
+| 📊 AirSheet | Create AirSheet files, worksheets, range read/write/find, append rows |
+| 📋 DbSheet | Table/field management, record CRUD & search |
+| 🎥 Meetings | Meeting management, participants, minutes & recordings |
 
 > Uncovered endpoints are accessible via `api get|post` for full API coverage.
 
@@ -53,7 +55,7 @@ macOS / Linux install to `~/.local/bin` by default (no sudo). Customize via envi
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.2 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.3 bash
 
 # Custom install directory
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -61,7 +63,7 @@ curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | W
 
 ```powershell
 # PowerShell: install a specific version
-$env:WPS365_VERSION="v0.3.1"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.3"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
 # PowerShell: custom install directory
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
