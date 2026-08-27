@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [v0.3.4] - 2026-08-27
+
+### 修复
+
+- macOS keychain 写入后立即读回校验；`Set` 假成功时 `auto` 回退 `file`，`keychain` 后端明确报错
+- 识别 `403000001` / `ErrPrivileges`（权益点如 `interface_company_doc`）时提示联系管理员开通【商业高级版】/【商业旗舰版】，并明确这不是 OAuth scope
+
+### 变更
+
+- 安装脚本默认从国内 CDN 拉取，GitHub Release 作为回退
+- 安装完成后的首次指引对齐为三步：`config init` → `auth login --device` → `user me`
+- 用户授权发消息走 `POST /v7/messages/create`；`batch_create` 仅用于应用身份批量（需显式 `--token-type app`）
+- 安装示例指定版本改为 `WPS365_VERSION=v0.3.4`
+
 ## [v0.3.3] - 2026-08-20
 
 ### 新增
@@ -219,6 +233,7 @@
 - 跨平台安装脚本（bash / PowerShell）
 - 安全凭证存储（Keychain / AES-256-GCM 加密文件）
 
+[v0.3.4]: https://github.com/wps365-open/cli/releases/tag/v0.3.4
 [v0.3.3]: https://github.com/wps365-open/cli/releases/tag/v0.3.3
 [v0.3.2]: https://github.com/wps365-open/cli/releases/tag/v0.3.2
 [v0.3.1]: https://github.com/wps365-open/cli/releases/tag/v0.3.1
