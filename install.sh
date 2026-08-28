@@ -135,13 +135,18 @@ download_and_install() {
 }
 
 verify_install() {
-    if command -v "$BINARY_NAME" > /dev/null 2>&1; then
-        local installed_path
+    local installed_path=""
+    if [ -x "${INSTALL_DIR}/${BINARY_NAME}" ]; then
+        installed_path="${INSTALL_DIR}/${BINARY_NAME}"
+    elif command -v "$BINARY_NAME" > /dev/null 2>&1; then
         installed_path="$(command -v "$BINARY_NAME")"
+    fi
+
+    if [ -n "$installed_path" ]; then
         ok "${BINARY_NAME} 已安装到 ${installed_path}"
 
         local ver_output
-        ver_output="$("$BINARY_NAME" --version 2>/dev/null || echo '(无法获取版本)')"
+        ver_output="$("$installed_path" --version 2>/dev/null || echo '(无法获取版本)')"
         info "版本: ${ver_output}"
     else
         warn "${BINARY_NAME} 已安装到 ${INSTALL_DIR}/${BINARY_NAME}"
