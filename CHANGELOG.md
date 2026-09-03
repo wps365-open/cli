@@ -1,242 +1,127 @@
 # Changelog
 
-本文件记录 WPS365 CLI 各版本的主要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [v0.3.4] - 2026-08-27
+## [0.3.5] - 2026-09-03
 
-### 修复
+### Added
+- `config init`：在验证 URL 旁输出 ASCII 二维码，便于手机扫码（编码失败则省略码，仍打印 URL）
+- `wps365-cli update`：从官方 CDN 比对版本，落后则下载、校验并原地替换当前二进制；`--check` 只比对；`--force` 强制重装。不静默后台升级，也不自动刷新 spec
+- `auth qrcode`：把验证 URL 写成 PNG（`--file`，相对当前目录）或 ASCII（`--ascii`）；全局 `-o/--output` 仍是输出格式，不是文件路径
+- `mcp serve` / `mcp tools` / `mcp config` / `mcp doctor`：把精装 catalog 暴露为本地 stdio MCP tools，Workbuddy / Claude / Cursor 可作为自定义连接器接入（`mcp config --app workbuddy` 输出可粘贴片段）
+- WorkBuddy 连接器片段 `connectors/workbuddy/mcp.json` 与 skill `wps365-mcp`：企业账号 `config init` + `auth login --device` 后接本地 `mcp serve`；与金山文档个人 MCP（mcp-center）分开
 
-- macOS keychain 写入后立即读回校验；`Set` 假成功时 `auto` 回退 `file`，`keychain` 后端明确报错
-- 识别 `403000001` / `ErrPrivileges`（权益点如 `interface_company_doc`）时提示联系管理员开通【商业高级版】/【商业旗舰版】，并明确这不是 OAuth scope
+### Changed
+- `auth login --device` 不再内嵌 ASCII 二维码，只打印验证 URL 与 `user_code`。需要码时用 `auth qrcode` 或走 `config init`
+- MCP / `auth login` 缺凭证时优先引导 `config init --new`，再 `auth login --device --scopes "..."`，不再把主路径写成 `auth setup`（避免 WorkBuddy Agent 走错）
+- MCP tool 名去掉 `wps365_` 前缀（`user_me` 而非 `wps365_user_me`），避免 WorkBuddy 用 server 名再拼一层变成 `wps365_wps365_*`。Cursor / Claude 仍靠 server 名隔离。已接入的客户端需重载 MCP。
 
-### 变更
+### Fixed
+- API 错误提示：识别 `403000001` / `ErrPrivileges`（含权益点如 `interface_company_doc`）时，在 stderr 追加 hint，引导联系企业管理员开通【商业高级版】/【商业旗舰版】，并明确非 OAuth scope
+- Skills：纠正「CLI 不能创建应用」误判——公有云重新初始化优先 `config init [--new] [--force]`；`provider bootstrap` 为可选且需先 `--help` 探测；写入 getting-started（中英文）与 shared
 
-- 安装脚本默认从国内 CDN 拉取，GitHub Release 作为回退
-- 安装完成后的首次指引对齐为三步：`config init` → `auth login --device` → `user me`
-- 用户授权发消息走 `POST /v7/messages/create`；`batch_create` 仅用于应用身份批量（需显式 `--token-type app`）
-- 安装示例指定版本改为 `WPS365_VERSION=v0.3.4`
+## [0.3.4] - 2026-08-27
 
-## [v0.3.3] - 2026-08-20
+### Fixed
+- 凭证存储：keychain 写入后立即读回校验；macOS 上 `Set` 假成功时不再静默通过，`auto` 会回退 `file`，`keychain` 后端会报错并提示 `WPS365_KEYRING_BACKEND=file`
+- Skills / curated：`airsheet data update` 的 `--range-data-body` 示例改为 `row_from`/`row_to`/`col_from`/`col_to`；误用 `row`/`col` 会被服务端忽略并写到 A1
+- Skills：`403000001` / `ErrPrivileges: interface_*` 明确为企业套餐权益不足，引导联系企业管理员开通商业高级版或商业旗舰版（非 OAuth scope）；写入 shared / getting-started，并同步 drive/airpage/airsheet 提示
+- Skills：`wps365-drive` 去掉易误导的「upload 通常 ≥ 0.4.3」表述，改为以 `drive file upload --help` 探测；并注明开源 0.3.x 预置 CLI 不含该命令
 
-### 新增
+### Changed
+- 安装脚本默认从国内 CDN 拉取 release，GitHub 作为回退；安装完成后的首次指引改为三步：`config init` → `auth login --device` → `user me`（与 README / `--help` 对齐）
+- Skills：`wps365-im` 明确 `im chat-message list` 默认使用 `--order desc` 从最近消息往前查，避免长群聊按 asc 从最早翻导致极慢
+- OpenAPI / Skills：`POST /v7/messages/batch_create`（`im message send`）补齐 `delegated` security，默认优先用户授权发消息；需应用身份时显式 `--token-type app`
+- Skills：存量升级引导强化——Agent 须优先用 skills 包内 `spec/api.yaml`+`curated.yaml` 覆盖本机 `$(wps365-cli config path)/spec/`（CDN 可能滞后）；写入 `wps365-shared` / `wps365-getting-started`（中英文）/ `wps365-im`
+- Skills：`wps365-airpage` 补齐本地插图（coop 附件三步 + picture block）、heading/picture/有序列表 JSON 示例；`wps365-drive` 单列「上传附件」与 `drive file upload` 区分，避免 Agent 走断头路
+- Skills：`wps365-airpage` 强化写入禁令——禁止 v1 `--arg`、禁止用 `import` 写正文、v2 `api` body 勿包 `request`；查块优先 `airpage block get`
+- Skills：`wps365-im` 用户授权发消息一律 `POST /v7/messages/create`（`receiver.type=user|chat`）；多用户则循环多次；`batch_create` / 精装 send 仅作应用身份批量
 
-- 精装命令：`drive doclib list` / `drive doclib get`，查询当前用户有权限的文档库/团队文档
-- 精装命令：智能文档 `airpage`（创建/读取、v2 块读写、OTL JSON 导入、导出 docx/json）
-- 精装命令：智能表格 `airsheet`（创建文件、工作表、选区读写/查找、追加行）
-- `airpage block create --content "一段字"` 即可写入正文（v2 JSON，无需 v1 `--arg`）
+## [0.3.3] - 2026-08-20
 
-### 变更
+### Added
+- 精装命令：`drive doclib list` / `drive doclib get`，查询当前用户有权限的文档库/团队文档；列团队文件再走已有 `drive file list <drive_id> 0`（全员团队客户端筛 `group.type == "whole"`）
+- 精装命令：智能文档 `airpage`（创建/读取、v2 块读写、OTL JSON 导入、导出 docx/json）；pdf 完整请求体走 `api` 兜底
+- 精装命令：智能表格 `airsheet`（创建文件、工作表、选区读写/查找、追加行）；复杂 JSON 用 `--*-body`
+- Skills：新增快速接入入口 `wps365-getting-started`（中英文），以及 `scripts/package-skills.sh`（可打包 skills，可选 `--cli-dir` 预置 CLI 归档）；客户包 `wps365-skills-0.3.2.zip` 预置 CLI v0.3.2 多平台归档
 
-- macOS / Linux 默认安装目录从 `/usr/local/bin` 改为 `~/.local/bin`，无需 sudo
-- 安装示例指定版本改为 `WPS365_VERSION=v0.3.3`
-- 功能覆盖从 7 个业务域扩展到 9 个（新增智能文档、智能表格；云文档增加文档库）
+### Fixed
+- `airsheet` 精装示例对齐 OpenAPI：`op_type` 使用 `cell_operation_type_formula`；`data find` 的 `--filter-body` 使用 `condition` / `search` / `duplicates`
 
-## [v0.3.2] - 2026-08-13
+### Changed
+- `airpage block get/create/update/delete` 改绑 v2 结构化 JSON：`airpage block create --content "一段字"` 即可写入正文（不再使用无法在开源侧编码的 v1 `--arg`）
+- v2 块接口 HTTP body 对齐网关：发送未包 `request` 的块请求（`{"block_id":"doc",...}`）；OpenAPI path 的 requestBody 改为内层 schema
+- OpenAPI 补齐 airpage v2 块协议、`import_from_docx` 与 airsheet worksheets/range_data/rows，供 `api` 兜底
+- `scripts/install.sh` / `scripts/install.ps1`：支持 `WPS365_INSTALL_DIR` 覆盖安装目录；默认 `~/.local/bin`，无需 sudo
+- 根命令 `--help` 增加开始使用三步（`config init` / `auth login --device` / `user me`），`config` 与 `auth login` 帮助文案同步
+- README 快速开始改为使用指南中的三步路径：`config init` → `auth login --device` → `user me`
+- Skills：`user list` / `user search` 翻页指引改为跟 `next_page_token`（`--page-token`）；因通讯录可见性，`--with-total` / `total` 不可靠，勿用来控制翻页（`wps365-user`、`wps365-contacts`）
+- Skills：禁止 Agent 使用 `dept list <root_id>`、`dept member list <root_id> --recursive --all` 及等价 `api` 递归遍历全企业部门/成员（`wps365-contacts`、`wps365-user`、`wps365-shared`、`wps365-getting-started`）
+- Skills：`wps365-im` 补充 `im chats list` 支持用户授权（delegated + `kso.chat.read`）查看消息会话列表；命令名对齐运行时 `im chats`（复数）
+- Skills：说明旧版升级到新版 CLI 后须执行 `wps365-cli spec update -y`，以拉取 CDN 最新 YAML（`wps365-getting-started`、`wps365-shared`）
+- Skills：`wps365-drive` 移植本地上传说明（`drive file upload`、分块参数与常见报错）；客户包 `wps365-skills-0.3.4.zip` 仅更新该 skill，预置 CLI 仍与 `0.3.2` 相同
+- Skills：能力地图挂上 `airpage` / `airsheet` / `drive doclib`；`wps365-airpage` / `wps365-airsheet` / `wps365-drive` 登录示例对齐 `--device --scopes`，并说明创建文件需 `kso.file.readwrite`、列盘/文档库依赖企业套餐权益
 
-### 新增
+## [0.3.2] - 2026-08-13
 
-- 业务 API HTTP 超时可配置：全局 `--timeout`、环境变量 `WPS365_TIMEOUT`、`config set timeout`（如 `2m`/`2min`，默认 `30s`；`0`/`none`/`unlimited` 表示不限制）
+### Added
+- 业务 API HTTP 超时可配置：全局 `--timeout`、环境变量 `WPS365_TIMEOUT`、`config set timeout`（Go duration 或常见别名如 `2m`/`2min`，默认 `30s`；`0`/`none`/`unlimited` 表示不限制）
 
-### 变更
+## [0.3.1] - 2026-07-22
 
-- 安装示例指定版本改为 `WPS365_VERSION=v0.3.2`
+### Changed
+- `auth login --device` 在有浏览器环境时自动打开验证页（与 `config init` 一致）；无浏览器时仅提示，不中断登录
 
-## [v0.3.1] - 2026-07-22
+### Fixed
+- 移除执行期基于本地 `granted_scopes` 的硬门禁；device login 等账本为空/不全时不再误拦已授权请求（授权以服务端为准）
 
-### 修复
+## [0.3.0] - 2026-07-22
 
-- README 精装命令示例对齐当前 CLI：`calendar event create` 使用 `--start`/`--end`；`im message send` 使用逗号分隔的 `--to`
+### Added
+- OAuth2 Device Authorization Grant（RFC 8628）：`auth login --device`，适配 SSH / Docker / CI 等无浏览器环境
+- Device login 允许省略 `--scopes`（授权码登录仍要求显式传入）
+- `config init`：开放平台应用绑定流程（begin/poll），凭证写入 config 与 keychain；支持 `--new`（创建新应用）与 `--app-id`（绑定已有应用）
 
-### 变更
+### Fixed
+- `auth setup` 读取旧 Secret Key 失败时可覆盖写入；修正废弃的 `file.search` scope
+- `auth clean` / provider auth clean 同步清除 `client_id`，避免半配置状态
+- 登录成功 JSON 不再输出 `granted_scopes`（改由 `auth status` 查看）
+- 精简 `config init` 成功提示文案
+- root 环境下跳过 `specfile` chmod 权限测试，修复 CI
 
-- 安装示例指定版本改为 `WPS365_VERSION=v0.3.1`
+## [0.2.0] - 2026-04-08
 
-## [v0.3.0] - 2026-07-22
+### Changed
+- Module path migrated from internal `wps365-cli` to `github.com/wps365-open/cli`
+- Go minimum version downgraded from 1.25 to 1.23 for broader community compatibility
+- Error returns wrapped with `fmt.Errorf` context across 13 source files (~100 call sites)
+- `ResolvedCredentials.ClientId` unified to `ClientID` (JSON tag unchanged: `client_id`)
 
-### 新增
+### Added
+- Per-file MIT license headers on all 48 Go source files
+- `LICENSES-THIRD-PARTY.txt` — third-party license compatibility report
+- `CONTRIBUTING.md`, GitHub Issue/PR templates
+- Unit tests for `providerdef` registry and `cli` provider helpers
+- ASCII workflow diagram in `transport/client.go` documenting token acquisition flow
+- One-line install scripts: `curl | bash` (macOS/Linux) and `irm | iex` (Windows PowerShell)
 
-- `config init`：浏览器一键完成开放平台应用创建/绑定，自动写入 `client_id` / `client_secret`（公网推荐首次配置路径）
-- OAuth2 Device Authorization Grant（`auth login --device`），适配远程 / WSL / CI 等无本地回调场景
-- Device 登录可按需省略 `--scopes`
-- 用户文档：同步中英文 README 与使用指南，补充 `config init` / `auth setup` FAQ 与前置准备说明
+### Fixed
+- README: "8 domains, 180+ commands" → "7 domains, 100+ commands" (actual counts from `curated.yaml`)
+- README: feature table aligned with actual curated command coverage per domain
+- README: `api` subcommand shows all 6 HTTP methods; removed non-existent `spec path/set/add`
+- README: outdated examples corrected (date, flags, API base URL)
+- README: added `auth token --app` usage; synced all changes to English README
 
-### 变更
-
-- 推荐快速开始改为：`config init` → `auth login --device` → `user me`（已有凭证仍可用 `auth setup`）
-- README 功能概览与认证命令表对齐当前产品能力
-- 安装示例指定版本改为 `WPS365_VERSION=v0.3.0`
-
-### 修复
-
-- **`auth setup` 旧 secret 不可读**：从安全存储读取已有 `client_secret` 失败（钥匙串不可用、密文损坏等，且非 NotFound）时不再中止；视为无旧值并继续写入，凭证变更时清理旧 token
-- **公网 scope**：去掉不存在的 `kso.file.search`，文件搜索路径仅使用 `kso.file_search.readwrite`
-- **`auth clean`**：同时清理 `client_id` 等相关配置，完整重置后需重新 `setup` / `config init`
-- **登录成功 JSON**：不再输出 `granted_scopes`
-- **`config init` 文案**：精简成功提示，减少用户文档中内部环境变量暴露
-
-## [v0.2.0] - 2026-06-26
-
-### ⚠️ 不兼容变更
-
-#### 1. 命令重命名（复数 → 单数）
-
-所有资源名统一为单数形式，使用旧名称的脚本需更新：
-
-| v0.1.0（旧） | v0.2.0（新） |
-|--------------|-------------|
-| `calendar events *` | `calendar event *` |
-| `calendar event-attendees *` | `calendar event-attendee *` |
-| `calendar event-instances *` | `calendar event-instance *` |
-| `calendar event-rooms *` | `calendar event-room *` |
-| `im messages *` | `im message *` |
-| `im chats *` | `im chat *` |
-| `im chat-members *` | `im chat-member *` |
-| `im chat-messages *` | `im chat-message *` |
-| `mail mailboxes *` | `mail mailbox *` |
-| `mail mailbox-folders *` | `mail mailbox-folder *` |
-| `mail mailbox-subfolders *` | `mail mailbox-subfolder *` |
-| `mail messages *` | `mail message *` |
-| `mail drafts *` | `mail draft *` |
-| `drive files *` | `drive file *` |
-| `drive file-versions *` | `drive file-version *` |
-| `drive file-link *` | `drive link *` |
-| `dbsheet sheets *` | `dbsheet sheet *` |
-| `dbsheet fields *` | `dbsheet field *` |
-| `dbsheet records *` | `dbsheet record *` |
-| `dbsheet record-pages *` | `dbsheet record-page *` |
-| `dbsheet views *` | `dbsheet view *` |
-| `meeting participants *` | `meeting participant *` |
-| `meeting minutes *` | `meeting minute *` |
-| `meeting recordings *` | `meeting recording *` |
-
-#### 2. 移除的精装命令（改用 `api get|post`）
-
-以下命令不再提供精装入口，可通过 `api` 直接调用对应端点：
-
-**日历**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `calendar timeoff-events create` | `api post "/v7/calendars/primary/timeoff_events/create"` |
-| `calendar timeoff-events delete` | `api post "/v7/calendars/primary/timeoff_events/{id}/delete"` |
-| `calendar events batch-create` | `api post "/v7/calendars/{calendar_id}/events/batch_create"` |
-
-**即时通讯**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `im chat-bookmark add` | `api post "/v7/chats/{chat_id}/bookmarks/batch_create"` |
-| `im chat-bookmark remove` | `api post "/v7/chats/{chat_id}/bookmarks/batch_delete"` |
-| `im in-chat-member check` | `api get "/v7/chats/{chat_id}/members/is_in_chat"` |
-| `im link-chat share` | `api post "/v7/chats/{chat_id}/share_link"` |
-
-> `im chat-bookmark list` 保留。
-
-**通讯录**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `user by-email get` | 合并至 `user get --type email`，或 `api post "/v7/users/by_emails"` |
-| `user by-phone get` | 合并至 `user get --type phone`，或 `api post "/v7/users/by_phones"` |
-| `user by-ex-id get` | 合并至 `user get --type external-id`，或 `api post "/v7/users/by_ex_user_ids"` |
-
-**邮箱**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `mail contact list` | `api get "/v7/mail_contacts"` |
-| `mail contact create` | `api post "/v7/mail_contacts"` |
-| `mail contact delete` | `api post "/v7/mail_contacts/{id}/delete"` |
-
-**云文档**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `drive files batch-delete` | `api post "/v7/drives/{drive_id}/files/batch_delete"` |
-| `drive files batch-get` | `api post "/v7/drives/{drive_id}/files/batch_get"` |
-| `drive file-owner update` | `api post "/v7/drives/{drive_id}/files/{file_id}/transfer_owner"` |
-| `drive file-permission list` | `api get "/v7/drives/{drive_id}/files/{file_id}/permissions"` |
-| `drive file-permission batch-create` | `api post "/v7/drives/{drive_id}/files/{file_id}/permissions/batch_create"` |
-| `drive file-permission batch-delete` | `api post "/v7/drives/{drive_id}/files/{file_id}/permissions/batch_delete"` |
-| `drive roles list` | `api get "/v7/drives/{drive_id}/roles"` |
-
-**多维表**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `dbsheet views delete` | `api post "/v7/coop/dbsheet/{file_id}/views/{view_id}/delete"` |
-| `dbsheet views get` | `api get "/v7/coop/dbsheet/{file_id}/views/{view_id}"` |
-| `dbsheet views list` | `api get "/v7/coop/dbsheet/{file_id}/views"` |
-| `dbsheet views update` | `api post "/v7/coop/dbsheet/{file_id}/views/{view_id}/update"` |
-| `dbsheet hooks create` | `api post "/v7/coop/dbsheet/{file_id}/hooks/create"` |
-| `dbsheet hooks list` | `api get "/v7/coop/dbsheet/{file_id}/hooks"` |
-| `dbsheet hooks delete` | `api post "/v7/coop/dbsheet/{file_id}/hooks/{hook_id}/delete"` |
-
-> `dbsheet view create` 保留。
-
-**会议**
-
-| 移除的命令 | 替代方式 |
-|-----------|---------|
-| `meeting recordings start` | `api post "/v7/meetings/{meeting_id}/recordings/start"` |
-| `meeting recordings stop` | `api post "/v7/meetings/{meeting_id}/recordings/stop"` |
-| `meeting rooms list` | `api get "/v7/meeting_rooms"` |
-| `meeting rooms get` | `api get "/v7/meeting_rooms/{room_id}"` |
-| `meeting rooms create` | `api post "/v7/meeting_rooms/create"` |
-| `meeting rooms update` | `api post "/v7/meeting_rooms/{room_id}/update"` |
-| `meeting rooms delete` | `api post "/v7/meeting_rooms/{room_id}/delete"` |
-| `meeting rooms batch-get` | `api post "/v7/meeting_rooms/batch_get"` |
-| `meeting rooms search` | `api post "/v7/meeting_rooms/search"` |
-| `meeting room-bookings batch-get` | `api post "/v7/meeting_room_bookings/batch_get"` |
-| `meeting room-bookings-status update` | `api post "/v7/meeting_room_bookings/{booking_id}/update_status"` |
-| `meeting room-levels list` | `api get "/v7/meeting_room_levels"` |
-| `meeting room-levels get` | `api get "/v7/meeting_room_levels/{room_level_id}"` |
-| `meeting room-levels create` | `api post "/v7/meeting_room_levels/create"` |
-| `meeting room-levels update` | `api post "/v7/meeting_room_levels/{room_level_id}/update"` |
-| `meeting room-levels delete` | `api post "/v7/meeting_room_levels/{room_level_id}/delete"` |
-| `meeting room-levels batch-get` | `api post "/v7/meeting_room_levels/batch_get"` |
-| `meeting room-settings batch-get` | `api post "/v7/meeting_room_settings/batch_get"` |
-| `meeting room-settings update` | `api post "/v7/meeting_room_settings/{room_id}/update"` |
-
-#### 3. 认证命令变更
-
-| v0.1.0（旧） | v0.2.0（新） | 说明 |
-|--------------|-------------|------|
-| `auth login --app` | 设置 `WPS365_CLIENT_ID` + `WPS365_CLIENT_SECRET` 环境变量 | 应用身份不再需要显式 login，CLI 自动获取 token |
-| `auth refresh` | 已移除 | token 刷新完全自动化，无需手动操作 |
-
-### 新增
-
-- `--jq` 内置过滤器：无需安装 jq，直接在命令行过滤 JSON 输出
-- `--flatten` 扁平化：嵌套对象展开为平坦结构，适合 table/tsv/csv 列式输出
-- `--no-color` 禁色模式：适合日志采集和 CI/CD 管道
-- `ndjson` / `csv` 输出格式：支持流式处理和电子表格导入
-- `provider` 子命令：统一管理 provider 配置（add / list / show / update / remove）
-
-### 改进
-
-- Provider 统一运行时：收敛所有命令到统一的 provider 模型，简化扩展与维护
-- Token 并发安全：文件锁序列化 token 刷新，避免多进程竞争
-- Spec 生命周期管理：支持 spec 文件自动下载与按需更新
-
-## [v0.1.0] - 2026-05-20
-
-### 新增
-
-- 首次发布，覆盖日历、即时通讯、通讯录、邮箱、云文档、多维表、会议 7 大业务域
-- `api get|post` 通用命令兜底全量 OpenAPI 端点
-- OAuth 2.0 认证（用户授权 + 应用身份）
-- 多格式输出：json / yaml / table / tsv
-- Dry Run 模式
-- 跨平台安装脚本（bash / PowerShell）
-- 安全凭证存储（Keychain / AES-256-GCM 加密文件）
-
-[v0.3.4]: https://github.com/wps365-open/cli/releases/tag/v0.3.4
-[v0.3.3]: https://github.com/wps365-open/cli/releases/tag/v0.3.3
-[v0.3.2]: https://github.com/wps365-open/cli/releases/tag/v0.3.2
-[v0.3.1]: https://github.com/wps365-open/cli/releases/tag/v0.3.1
-[v0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0
-[v0.2.0]: https://github.com/wps365-open/cli/releases/tag/v0.2.0
-[v0.1.0]: https://github.com/wps365-open/cli/releases/tag/v0.1.0
+[Unreleased]: https://github.com/wps365-open/cli/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/wps365-open/cli/releases/tag/v0.3.5
+[0.3.4]: https://github.com/wps365-open/cli/releases/tag/v0.3.4
+[0.3.3]: https://github.com/wps365-open/cli/releases/tag/v0.3.3
+[0.3.2]: https://github.com/wps365-open/cli/releases/tag/v0.3.2
+[0.3.1]: https://github.com/wps365-open/cli/releases/tag/v0.3.1
+[0.3.0]: https://github.com/wps365-open/cli/releases/tag/v0.3.0
+[0.2.0]: https://github.com/wps365-open/cli/releases/tag/v0.2.0

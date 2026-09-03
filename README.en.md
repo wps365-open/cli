@@ -5,29 +5,33 @@
 
 [中文](README.md) | English
 
-The official WPS 365 CLI tool — a command-line gateway for developers and AI Agents. Covers 9 business domains including Calendar, Messenger, Contacts, Mail, Drive, AirPage, AirSheet, DbSheet, and Meetings. Uncovered endpoints are accessible via `api`.
+The official WPS 365 CLI tool — a command-line gateway for developers and AI Agents. Covers 9 business domains including Calendar, Messenger, Contacts, Mail, Drive, Airpage, Airsheet, DbSheet, and Meetings, with 120 curated commands; uncovered endpoints (e.g. Sheets) are accessible via `api` commands.
 
-For more complete installation, authentication, and command usage details, see the [WPS 365 CLI User Guide](https://365.kdocs.cn/wiki/l/0lcqi8RexYzQKD) (Chinese).
+[Install](#installation--quick-start) · [Commands](#dual-track-command-system) · [Auth](#authentication) · [Advanced](#advanced-usage) · [Security](#credentials--security) · [Development](#development) · [Contributing](#contributing)
 
-[Install](#installation--quick-start) · [Prerequisites](#prerequisites) · [Commands](#dual-track-command-system) · [Auth](#authentication) · [Advanced](#advanced-usage) · [Security](#credentials--security) · [FAQ](#faq) · [User Guide](https://365.kdocs.cn/wiki/l/0lcqi8RexYzQKD) · [Contributing](#contributing)
+## Why wps365-cli?
+
+- **Wide Coverage** — 9 business domains, 120 curated commands, one tool for the entire WPS 365 platform
+- **Dual-Track Architecture** — Curated commands (semantic, user-friendly) + `api get|post|put|patch|delete|head` (full API coverage), choose the right granularity
+- **CDN Spec-Driven** — Official command specs are auto-downloaded from CDN on first run, ready to use out of the box; local overrides and custom extensions are supported
+- **Secure & Controllable** — OS-native keychain or AES-256-GCM encrypted credential storage, plaintext secrets never touch disk
+- **Script-Friendly** — Unified exit codes, structured output, `--dry-run` preview, environment-variable driven — CI/CD ready out of the box
+- **Automatic Token Management** — Proactive refresh before expiry, transparent 401 retry — developers never worry about token lifecycle
+- **Open Source, Zero Barriers** — MIT license, one-line install and you're ready to go
 
 ## Features
 
-The current release provides curated commands across 9 business domains:
-
-| Category | Capabilities |
-|----------|-------------|
-| 📅 Calendar | Calendar CRUD & subscription, event CRUD & search, attendees, rooms, free/busy, minutes |
-| 💬 Messenger | Send/reply/recall messages, chat CRUD, member management, message history, P2P chat, unread count |
-| 👤 Contacts | Current user, user list & search |
-| 📧 Mail | Mailbox management, folder browsing, message list/detail/search, drafts |
-| 📁 Drive | Drive management, document libraries, file CRUD & search, batch copy/move, versions, share links |
-| 📝 AirPage | Create/read AirPage files, v2 block read/write (`--content` for plain text), OTL JSON import, export docx/json |
-| 📊 AirSheet | Create AirSheet files, worksheets, range read/write/find, append rows |
-| 📋 DbSheet | Table/field management, record CRUD & search |
-| 🎥 Meetings | Meeting management, participants, minutes & recordings |
-
-> Uncovered endpoints are accessible via `api get|post` for full API coverage.
+| Category | Commands | Capabilities |
+|----------|----------|-------------|
+| 📅 Calendar | 25 | Calendar CRUD, event CRUD & search, attendee & room management, free/busy queries, recurring instances, meeting minutes, batch primary calendar queries |
+| 💬 Messenger | 15 | Send/reply/recall messages, chat CRUD, member management, chat message history, P2P chat queries, unread counts |
+| 👤 Contacts | 5 | Current user info, user list & search (name/email/phone), user details, department queries |
+| 📧 Mail | 8 | Mailbox list, folder & subfolder browsing, message list/detail/search, draft creation & sending |
+| 📁 Drive | 23 | Drive management, document libraries/team docs, file CRUD/search/download/rename, batch copy & move, content extraction, version management, share links, recent/starred/frequent files |
+| 📝 Airpage | 9 | Create/get smart documents, v2 block CRUD (`--content` writes plain text), OTL JSON import, export to docx/json |
+| 📊 Airsheet | 8 | Create smart sheets, worksheets, range read/write/find, append rows |
+| 📋 DbSheet | 14 | Schema queries, table/field management, record CRUD & search, paginated queries |
+| 🎥 Meetings | 13 | Meeting list/detail/end, host transfer, participant invite/remove/list, minutes & summaries, recordings & transcripts |
 
 ## Installation & Quick Start
 
@@ -55,93 +59,36 @@ macOS / Linux install to `~/.local/bin` by default (no sudo). Customize via envi
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.4 bash
+curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.5 bash
 
 # Custom install directory
 curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
 ```
 
 ```powershell
-# PowerShell: install a specific version
-$env:WPS365_VERSION="v0.3.4"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+# PowerShell: Install a specific version
+$env:WPS365_VERSION="v0.3.5"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 
-# PowerShell: custom install directory
+# PowerShell: Custom install directory
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
 ```
 
-**Manual download**
+**Manual Download**
 
-[Release Page](https://github.com/wps365-open/cli/releases)
+Download the binary for your platform from the [Release page](https://github.com/wps365-open/cli/releases).
 
 ### Three Steps to Start
 
 ```bash
-# 0. Install (see above)
-
-# 1. Create / bind an app (recommended, once)
+# 1. Create or bind an application (one-time)
 wps365-cli config init
-
-# 2. Log in (use --device for remote / WSL)
+# 2. Log in
 wps365-cli auth login --device
-
-# 3. Start using
+# 3. Confirm the current user
 wps365-cli user me
 ```
 
-Cannot use `config init`? See [Path B: manual app setup](#path-b-manual-open-platform-setup-advanced) below.
-
-## Prerequisites
-
-This section covers `config init` parameters, troubleshooting, and the fallback when one-shot registration is unavailable.
-
-### Path A: `config init` (recommended)
-
-Public-cloud users do not need to create an app manually in the Open Platform console first.
-
-```bash
-wps365-cli config init
-```
-
-Flow:
-
-1. CLI starts Open Platform app registration and prints a browser URL (and tries to open it)
-2. In the browser: verify identity → create/bind app → authorize (existing apps prefer the bind page)
-3. After polling succeeds, CLI writes `client_id` to local config and `client_secret` to the secure store
-
-Common flags:
-
-| Flag | Description |
-|------|-------------|
-| `--new` | Prefer creating a new app in the browser |
-| `--force` | Overwrite an existing binding without confirmation (required in non-interactive envs) |
-| `--debug` | Verbose registration step logs |
-
-```bash
-wps365-cli config init --new
-wps365-cli config init --force
-wps365-cli config init --debug
-```
-
-Then run `auth login`.
-
-### Path B: Manual Open Platform setup (advanced)
-
-For existing enterprise apps, stricter approval workflows, or environments where `config init` is unavailable.
-
-Overall flow: create app → get credentials → add callback → request scopes & submit release → admin approval → write into CLI.
-
-1. Open the [WPS 365 Open Platform developer console](https://open.wps.cn/) and create an enterprise app  
-2. Under **Basic info → App credentials**, copy App ID (`client_id`) and App Secret (`client_secret`)  
-3. Under **Development → Security**, add callback: `http://localhost:18365/callback`  
-4. Request scopes under **Permissions**, then create a version and submit release under **Version management**  
-5. An enterprise admin approves the app in the admin console  
-6. Write credentials into the CLI:
-
-```bash
-wps365-cli auth setup
-```
-
-Then run `auth login`. Screenshot-level steps: [Prerequisites](docs/prerequisites.md).
+> Enterprise admins should configure a CLI app auto-approval rule first. `config init` opens a browser to create or bind an app. If you already have credentials, use `auth setup`. See [Prerequisites: App Creation & Permission Setup](docs/prerequisites.md) for details.
 
 ## Dual-Track Command System
 
@@ -154,9 +101,7 @@ Semantic parameters, smart defaults, automatic auth constraint validation — fr
 ```bash
 wps365-cli user me
 wps365-cli calendar event create primary \
-  --name "Weekly Sync" \
-  --start "2026-07-21T14:00:00+08:00" \
-  --end "2026-07-21T15:00:00+08:00"
+  --name "Weekly Sync" --start "2026-09-01T14:00:00+08:00" --end "2026-09-01T15:00:00+08:00"
 wps365-cli im message send --to "u1,u2" --text "hello"
 ```
 
@@ -164,12 +109,16 @@ Run `wps365-cli <resource> --help` to see all subcommands.
 
 ### 2. Raw API Calls
 
-Uncovered endpoints are accessible via `api get|post` to call any WPS 365 Open Platform endpoint directly:
+Call any WPS 365 Open Platform endpoint directly, covering all APIs.
 
 ```bash
 wps365-cli api get "/v7/users/current"
-wps365-cli api post "/v7/calendars/create" \
-  --data '{"summary": "Project Calendar"}'
+wps365-cli api post "/v7/messages/batch_create" \
+  --data '{
+    "type": "text",
+    "receivers": [{"type": "user", "receiver_ids": ["u1"]}],
+    "content": {"text": {"type": "plain", "content": "hello"}}
+  }'
 ```
 
 ## Authentication
@@ -178,37 +127,41 @@ wps365-cli api post "/v7/calendars/create" \
 
 | Command | Description | Use Case |
 |---------|-------------|----------|
-| `config init` | One-shot app registration | Browser create/bind; writes credentials automatically |
-| `auth setup` | Configure OAuth client credentials | First-time setup, interactive guided |
-| `auth login` | Log in with `--scopes` | Browser OAuth; use `--device` for remote / WSL |
-| `auth status` | View authentication status | Check token validity and expiry |
-| `auth token` | Output current access token | Pass to external tools: `curl -H "Authorization: Bearer $(wps365-cli auth token)"` |
-| `auth logout` | Remove local tokens | Sign out; credentials retained for re-login |
-| `auth clean` | Clear all auth data | Full reset; requires `auth setup` / `config init` again |
+| `config init` | One-shot app registration | Recommended first-time setup; browser create/bind writes `client_id`/`client_secret` |
+| `auth setup` | Configure OAuth client credentials | Existing credentials / manual management; interactive save of `client_id` and `client_secret` |
+| `auth login` | Log in for authorization | `--device` for device-code login (`--scopes` optional); auth-code login requires `--scopes` |
+| `auth status` | View authentication status | Check if current token is valid, expiry time, auth mode, etc. |
+| `auth token` | Print current access token to stdout | Pass token to other tools or scripts; defaults to delegated token, `--app` prints app token |
+| `auth refresh` | Manually refresh token | Proactively refresh an expiring token, specify `--delegated` or `--app` |
+| `auth logout` | Delete local delegated token | Sign out of current user authorization; credentials are preserved, re-`login` directly |
+| `auth clean` | Clean all authentication data | Use when credentials are corrupted, keys mismatch, or a full reset is needed; clears tokens/secrets and `client_id`/`redirect_uri` from config, then restart from `setup`/`config init`. `--force` skips confirmation |
+| `auth qrcode` | Encode a URL as a QR code | `--file qr.png` writes PNG (cwd-relative); `--ascii` prints a terminal QR. Global `-o/--output` is format, not a file path |
 
 ```bash
-# Recommended: one-shot registration + device login
+# 1a. One-shot app registration (recommended)
 wps365-cli config init
+
+# 1b. Manual credential setup (interactive)
+wps365-cli auth setup
+
+# 2. User identity login (device code, recommended)
 wps365-cli auth login --device
 
-# Or browser callback login with explicit scopes
-wps365-cli auth login --scopes "kso.user_base.read,kso.calendar.read"
-
-# App identity (CI/CD — no login needed, uses env vars)
+# 3. Non-interactive (CI/CD / app-only scenarios)
 export WPS365_CLIENT_ID="<client-id>"
 export WPS365_CLIENT_SECRET="<client-secret>"
-wps365-cli user list   # auto-acquires app token via client_credentials
+wps365-cli im message send --to "<OPEN_ID>" --text "hello"
 
-# Check current authentication status
+# 4. Check current authentication status
 wps365-cli auth status
 
-# Pass token to other tools
-curl -H "Authorization: Bearer $(wps365-cli auth token)" https://open.wps.cn/v7/users/current
+# 5. Pass token to other tools (defaults to delegated token, --app for app token)
+curl -H "Authorization: Bearer $(wps365-cli auth token)" https://openapi.wps.cn/v7/users/current
 
-# Log out (credentials preserved)
+# 6. Log out (credentials preserved, re-login directly next time)
 wps365-cli auth logout
 
-# Full reset
+# 7. Full reset (clear all tokens, credentials, and auto-generated keys)
 wps365-cli auth clean --force
 ```
 
@@ -216,10 +169,10 @@ wps365-cli auth clean --force
 
 | Mode | Description | Acquisition |
 |------|-------------|-------------|
-| `delegated` | User authorization, for user-scoped endpoints (current user, personal tasks, etc.) | `auth login --scopes "..."` / `auth login --device` |
-| `app` | Application identity, for server-to-server or app-only endpoints | Set `WPS365_CLIENT_ID` + `WPS365_CLIENT_SECRET` env vars; CLI auto-acquires token |
+| `delegated` | User authorization, for user-scoped endpoints (current user, etc.) | `auth login --device` or `auth login --scopes "..."` |
+| `app` | Application identity, for server-to-server or app-only endpoints | Run the target command directly, add `--token-type app` when needed |
 
-Commands automatically select the compatible auth mode based on OpenAPI `security`. Use `--token-type` to override explicitly. Incompatible overrides produce an error rather than silently switching.
+Commands automatically select the compatible auth mode based on OpenAPI `security`. Use `--token-type` to override explicitly. Incompatible overrides produce an error; if a delegated token is unavailable, the CLI falls back to app mode automatically.
 
 ## Advanced Usage
 
@@ -230,27 +183,11 @@ Commands automatically select the compatible auth mode based on OpenAPI `securit
 -o yaml      # YAML
 -o table     # Human-readable table
 -o tsv       # Tab-separated (for piping)
--o ndjson    # Newline-delimited JSON (for streaming)
--o csv       # CSV format
 ```
 
 ```bash
 wps365-cli -o yaml user me
 wps365-cli -o table calendar list
-wps365-cli -o csv dbsheet record list --file-id <id> --sheet-id <id>
-```
-
-### Output Pipeline
-
-```bash
-# Built-in jq filter (no external jq required)
-wps365-cli user me --jq '.name'
-
-# Flatten nested objects for columnar outputs
-wps365-cli -o table drive file list --flatten
-
-# Disable colorized output (for logs or CI)
-wps365-cli --no-color user list
 ```
 
 ### Dry Run
@@ -260,7 +197,7 @@ Preview requests without sending, useful for debugging and script validation:
 ```bash
 wps365-cli --dry-run user me
 wps365-cli --dry-run api get "/v7/users/current"
-wps365-cli --dry-run -o json im message send --to u1 --text "hello"
+wps365-cli --dry-run -o json im message send --to "u1" --text "hello"
 ```
 
 ### HTTP Timeout
@@ -272,6 +209,24 @@ wps365-cli --timeout 2m user me
 wps365-cli --timeout 0 api get "/v7/users/current"
 wps365-cli config set timeout 2m
 ```
+
+### Spec Management
+
+Official specs are auto-downloaded from CDN on first run — no setup required.
+
+```bash
+wps365-cli spec status      # Show current spec status (including source and version)
+wps365-cli spec update      # Check and update official spec files
+```
+
+### Self-update
+
+```bash
+wps365-cli update           # Compare with CDN latest and replace this binary if behind
+wps365-cli update --check   # Compare only; do not download
+```
+
+After upgrading the binary, run `wps365-cli spec update -y` if new commands are missing.
 
 ### Environment Variables
 
@@ -288,16 +243,18 @@ wps365-cli config set timeout 2m
 | `WPS365_REDIRECT_URI` | OAuth redirect URI |
 | `WPS365_CONFIG_DIR` | Configuration directory |
 | `WPS365_KEYRING_BACKEND` | Credential storage backend (`keychain` / `file`) |
-| `WPS365_KEYRING_PASSWORD` | Encryption password for file backend |
+| `WPS365_KEYRING_PASSWORD` | Encryption password for file backend (optional, auto-generated if not set) |
 | `WPS365_OUTPUT` | Default output format |
 | `WPS365_QUIET` | Suppress informational stderr output |
+| `WPS365_CDN_LATEST_URL` | Override latest.txt URL for CLI self-update |
+| `WPS365_CDN_URL` | Override release archive CDN prefix (including `/releases/download`) |
 
 ## Credentials & Security
 
 `client_secret` and tokens are stored in a secure backend — plaintext never touches disk:
 
-- **Keychain** (macOS/Windows default): uses system Keychain / Credential Manager
-- **Encrypted file** (Linux default): AES-256-GCM encrypted. Auto-generates a random key when `WPS365_KEYRING_PASSWORD` is not set
+- **Keychain** (default on macOS/Windows): uses system Keychain / Credential Manager
+- **Encrypted file** (default on Linux): AES-256-GCM encrypted. When `WPS365_KEYRING_PASSWORD` is not set, a random key is auto-generated and persisted locally — no extra configuration needed
 
 Token lifecycle is fully automatic:
 
@@ -306,27 +263,44 @@ Token lifecycle is fully automatic:
 - Delegated tokens are refreshed via refresh_token; if the refresh token itself expires, the CLI prompts to `auth login` again
 - App tokens are re-acquired via client_credentials when expired
 
-## FAQ
+## Development
 
-**Q: `config init` keeps showing Waiting for binding?**  
-Finish every browser step, especially the final authorization confirmation. Create/bind without authorize leaves the CLI pending until the session expires.
+### Directory Layout
 
-**Q: `config init` vs `auth setup`?**
+```
+cmd/wps365-cli/       CLI entry point
+internal/
+  cli/                Root command, base commands, and command mounting
+  curated/            Curated command catalog and parameter binding
+  api/                api get|post|put|patch|delete|head fallback commands
+  openapi/            OpenAPI parsing, path matching, and contract validation
+  auth/               Authentication, token storage, refresh, and 401 retry
+  transport/          HTTP client with automatic token injection and 401 retry
+  config/             Configuration loading and environment variable resolution
+specs/                Repository-bundled official specs
+docs/design-docs/     Design documents
+```
 
-| | `config init` | `auth setup` |
-|--|---------------|--------------|
-| When | First use / quick start | Existing credentials |
-| How | Browser flow; auto AK/SK | Interactive or env |
-| Storage | Same (`config.json` + secure store) | Same |
+### Build & Test
 
-**Q: Permissions applied but not effective?**  
-You still need create version → submit release → admin approval. Requesting scopes alone leaves them pending review.
+```bash
+make build            # Build for current platform
+make build-all        # Build for all platforms (macOS/Linux/Windows)
+make install          # Install to $GOPATH/bin
+make test             # Unit tests
+make test-e2e         # Black-box E2E tests
+make quality-report   # Run quality checks report
+make help             # Show all Make targets
+```
 
-**Q: Contacts APIs return empty data or permission errors?**  
-Besides capability scopes, some APIs also need availability range and data-permission settings in the app console.
+### Related Documentation
 
-**Q: `CLIENT_SECRET` leaked?**  
-Reset the secret in the developer console (old secret is invalidated immediately), then run `config init` or `auth setup` again.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Project architecture and directory responsibilities
+- [docs/design-docs/auth.md](docs/design-docs/auth.md) — Authentication and credential design
+- [docs/design-docs/spec-discovery.md](docs/design-docs/spec-discovery.md) — Spec file management and loading order
+- [docs/design-docs/curated-commands.md](docs/design-docs/curated-commands.md) — Curated command design principles
+- [docs/design-docs/openapi-cli-mapping.md](docs/design-docs/openapi-cli-mapping.md) — Command-to-API mapping rules
+- [docs/design-docs/testing.md](docs/design-docs/testing.md) — Testing strategy and E2E constraints
 
 ## Contributing
 
