@@ -1,178 +1,528 @@
 #!/usr/bin/env bash
+# WPS 365 CLI installer
+# Usage: curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
+#   or:  curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash -s -- --version v0.3.2
+#
+# Inspired by Homebrew, rustup, Starship install scripts.
+
 set -euo pipefail
 
-REPO="wps365-open/cli"
-BINARY_NAME="wps365-cli"
-GITHUB_BASE="https://github.com/${REPO}/releases"
+BIN_NAME="wps365-cli"
+GITHUB_REPO="wps365-open/cli"
+GO_MODULE_PATH="wps365-cli"
 
-# Windows (Git Bash / MINGW) 使用用户目录；macOS / Linux 使用 ~/.local/bin（无需 sudo）
-case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*) _DEFAULT_DIR="$HOME/.wps365/bin" ;;
-    *)                    _DEFAULT_DIR="${HOME}/.local/bin" ;;
-esac
-INSTALL_DIR="${WPS365_INSTALL_DIR:-$_DEFAULT_DIR}"
-TMPDIR_CLEANUP=""
+CDN_BASE_URL="${WPS365_CDN_URL:-https://open-docs.wpscdn.cn/cli/releases/download}"
+CDN_LATEST_URL="${WPS365_CDN_LATEST_URL:-https://open-docs.wpscdn.cn/cli/latest.txt}"
+GITHUB_BASE_URL="https://github.com/${GITHUB_REPO}/releases/download"
+GITHUB_API_URL="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[0;33m'
-CYAN=$'\033[0;36m'
-BOLD=$'\033[1m'
-RESET=$'\033[0m'
+VERSION="latest"
+# Default to ~/.local/bin (no sudo). Override with WPS365_INSTALL_DIR or --install-dir.
+INSTALL_DIR="${WPS365_INSTALL_DIR:-${HOME}/.local/bin}"
+MODIFY_PATH=true
+FORCE=false
+INSECURE=false
+TMP_DIR=""
 
-info()  { printf "%s\n" "${CYAN}▸${RESET} $*"; }
-ok()    { printf "%s\n" "${GREEN}✔${RESET} $*"; }
-warn()  { printf "%s\n" "${YELLOW}⚠${RESET} $*"; }
-error() { printf "%s\n" "${RED}✘${RESET} $*" >&2; exit 1; }
+# ------------------------------------------------------------------
+# Logging
+# ------------------------------------------------------------------
+info()  { printf "\033[1;34m==>\033[0m %s\n" "$*"; }
+warn()  { printf "\033[1;33mWarning:\033[0m %s\n" "$*" >&2; }
+error() { printf "\033[1;31mError:\033[0m %s\n" "$*" >&2; }
+abort() { error "$@"; exit 1; }
 
-cleanup() { [ -n "$TMPDIR_CLEANUP" ] && rm -rf "$TMPDIR_CLEANUP"; }
-trap cleanup EXIT
+# ------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------
+has_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 need_cmd() {
-    command -v "$1" > /dev/null 2>&1 || error "需要 '$1'，请先安装后重试"
+    if ! has_cmd "$1"; then
+        abort "Required command '$1' not found. Please install it and retry."
+    fi
 }
 
+# Portable download: prefers curl, falls back to wget
+do_download() {
+    local url="$1" dest="$2"
+    if has_cmd curl; then
+        # Allow plain HTTP for local/private URLs (e.g. WPS365_CDN_URL=http://...)
+        case "$url" in
+            http://127.0.0.1*|http://localhost*)
+                curl -fsSL --retry 3 -o "$dest" "$url"
+                ;;
+            *)
+                curl --proto '=https' --tlsv1.2 -fsSL --retry 3 -o "$dest" "$url"
+                ;;
+        esac
+    elif has_cmd wget; then
+        case "$url" in
+            http://127.0.0.1*|http://localhost*)
+                wget -q --tries=3 -O "$dest" "$url"
+                ;;
+            *)
+                wget --https-only -q --tries=3 -O "$dest" "$url"
+                ;;
+        esac
+    else
+        abort "Either 'curl' or 'wget' is required for downloading."
+    fi
+}
+
+# Download with fallback: CDN first, then GitHub
+do_download_with_fallback() {
+    local cdn_url="$1" gh_url="$2" dest="$3"
+    if do_download "$cdn_url" "$dest" 2>/dev/null; then
+        return 0
+    fi
+    warn "CDN download failed, trying GitHub Releases..."
+    do_download "$gh_url" "$dest"
+}
+
+# ------------------------------------------------------------------
+# parse_args
+# ------------------------------------------------------------------
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --version|-v)
+                shift
+                [ $# -eq 0 ] && abort "--version requires a value (e.g. v0.2.0)"
+                VERSION="$1"
+                ;;
+            --install-dir|-d)
+                shift
+                [ $# -eq 0 ] && abort "--install-dir requires a path"
+                INSTALL_DIR="$1"
+                ;;
+            --no-modify-path)
+                MODIFY_PATH=false
+                ;;
+            --force|-f)
+                FORCE=true
+                ;;
+            --insecure)
+                INSECURE=true
+                ;;
+            --help|-h)
+                print_help
+                exit 0
+                ;;
+            *)
+                abort "Unknown option: $1 (see --help)"
+                ;;
+        esac
+        shift
+    done
+}
+
+print_help() {
+    cat <<EOF
+WPS 365 CLI Installer
+
+USAGE:
+    curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
+    curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash -s -- [OPTIONS]
+
+OPTIONS:
+    -v, --version <VERSION>       Install a specific version (e.g. v0.3.2) [default: latest]
+    -d, --install-dir <DIR>       Installation directory [default: ~/.local/bin]
+        --no-modify-path          Do not modify shell profile for PATH
+    -f, --force                   Overwrite existing binary without prompting
+        --insecure                Skip checksum verification (NOT recommended)
+    -h, --help                    Show this help message
+
+ENVIRONMENT:
+    WPS365_CDN_URL                Override CDN base URL for downloads
+    WPS365_CDN_LATEST_URL         Override CDN latest.txt URL
+    WPS365_INSTALL_DIR            Override installation directory [default: ~/.local/bin]
+
+EXAMPLES:
+    # Install latest version
+    curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
+
+    # Install specific version
+    curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash -s -- -v v0.3.2
+
+    # Install to /usr/local/bin
+    curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash -s -- -d /usr/local/bin
+
+    # Uninstall
+    rm ~/.local/bin/wps365-cli
+EOF
+}
+
+# ------------------------------------------------------------------
+# detect_platform: returns darwin / linux
+# ------------------------------------------------------------------
 detect_platform() {
-    local os arch
-
+    local os
     os="$(uname -s)"
-    arch="$(uname -m)"
-
     case "$os" in
-        Linux*)  os="unknown-linux-gnu" ;;
-        Darwin*) os="apple-darwin" ;;
-        MINGW*|MSYS*|CYGWIN*) os="pc-windows-gnu" ;;
-        *) error "不支持的操作系统: $os" ;;
+        Darwin)  echo "darwin" ;;
+        Linux)   echo "linux" ;;
+        MINGW*|MSYS*|CYGWIN*)
+            echo "windows" ;;
+        *)
+            abort "Unsupported operating system: $os"
+            ;;
     esac
+}
 
+# ------------------------------------------------------------------
+# detect_arch: returns x86_64 / aarch64
+# ------------------------------------------------------------------
+detect_arch() {
+    local arch
+    arch="$(uname -m)"
     case "$arch" in
-        x86_64|amd64)  arch="x86_64" ;;
-        aarch64|arm64) arch="aarch64" ;;
-        *) error "不支持的 CPU 架构: $arch" ;;
-    esac
-
-    PLATFORM="${arch}-${os}"
-}
-
-detect_version() {
-    if [ -n "${WPS365_VERSION:-}" ]; then
-        VERSION="$WPS365_VERSION"
-        info "使用指定版本: ${VERSION}"
-        return
-    fi
-
-    info "正在获取最新版本号..."
-    need_cmd curl
-
-    local latest_url="${GITHUB_BASE}/latest"
-    local redirect
-    redirect="$(curl -fsSI -o /dev/null -w '%{redirect_url}' "$latest_url" 2>/dev/null)" || true
-
-    if [ -n "$redirect" ]; then
-        VERSION="${redirect##*/}"
-    else
-        local body
-        body="$(curl -fsSL "$latest_url" 2>/dev/null)" || error "无法获取最新版本信息，请检查网络连接"
-        VERSION="$(echo "$body" | grep -oE 'tag/v[0-9]+\.[0-9]+\.[0-9]+[^"]*' | head -1 | sed 's|tag/||')"
-    fi
-
-    [ -n "$VERSION" ] || error "无法解析最新版本号"
-    info "最新版本: ${BOLD}${VERSION}${RESET}"
-}
-
-download_and_install() {
-    local ext="tar.gz"
-    case "$PLATFORM" in
-        *windows*) ext="zip" ;;
-    esac
-
-    local filename="${BINARY_NAME}-${PLATFORM}.${ext}"
-    local url="${GITHUB_BASE}/download/${VERSION}/${filename}"
-    local tmpdir
-    tmpdir="$(mktemp -d)"
-    TMPDIR_CLEANUP="$tmpdir"
-
-    info "下载 ${BOLD}${filename}${RESET} ..."
-    need_cmd curl
-
-    local http_code
-    http_code="$(curl -fsSL -w '%{http_code}' -o "${tmpdir}/${filename}" "$url" 2>/dev/null)" || true
-
-    [ -f "${tmpdir}/${filename}" ] && [ -s "${tmpdir}/${filename}" ] || \
-        error "下载失败 (HTTP ${http_code:-unknown})\n  URL: ${url}\n  请检查网络或版本号是否正确"
-
-    info "解压中..."
-    case "$ext" in
-        tar.gz)
-            tar xzf "${tmpdir}/${filename}" -C "$tmpdir"
+        x86_64|amd64)   echo "x86_64" ;;
+        arm64|aarch64)   echo "aarch64" ;;
+        *)
+            abort "Unsupported architecture: $arch"
             ;;
-        zip)
+    esac
+}
+
+# ------------------------------------------------------------------
+# resolve_target: maps OS+arch to release target triple
+# ------------------------------------------------------------------
+resolve_target() {
+    local platform="$1" arch="$2"
+    case "${platform}-${arch}" in
+        darwin-aarch64) echo "aarch64-apple-darwin" ;;
+        darwin-x86_64)  echo "x86_64-apple-darwin" ;;
+        linux-x86_64)   echo "x86_64-unknown-linux-gnu" ;;
+        linux-aarch64)  echo "aarch64-unknown-linux-gnu" ;;
+        windows-x86_64) echo "x86_64-pc-windows-gnu" ;;
+        windows-aarch64) echo "aarch64-pc-windows-gnu" ;;
+        *)
+            abort "No prebuilt binary for ${platform}/${arch}. Try building from source: go install github.com/${GITHUB_REPO}/cmd/wps365-cli@latest"
+            ;;
+    esac
+}
+
+# ------------------------------------------------------------------
+# resolve_version: fetch latest tag or validate user-provided version
+# ------------------------------------------------------------------
+resolve_version() {
+    if [ "$VERSION" = "latest" ]; then
+        info "Fetching latest version..."
+        local tag=""
+
+        # Prefer CDN latest.txt to avoid GitHub API rate limits.
+        if has_cmd curl; then
+            tag="$(curl --proto '=https' --tlsv1.2 -fsSL "$CDN_LATEST_URL" 2>/dev/null | tr -d '[:space:]' || true)"
+        elif has_cmd wget; then
+            tag="$(wget --https-only -qO- "$CDN_LATEST_URL" 2>/dev/null | tr -d '[:space:]' || true)"
+        else
+            abort "Either 'curl' or 'wget' is required."
+        fi
+
+        if [ -z "$tag" ]; then
+            warn "CDN latest.txt unavailable, falling back to GitHub API..."
+            if has_cmd curl; then
+                tag="$(curl --proto '=https' --tlsv1.2 -fsSL "$GITHUB_API_URL" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')"
+            elif has_cmd wget; then
+                tag="$(wget --https-only -qO- "$GITHUB_API_URL" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')"
+            fi
+        fi
+
+        if [ -z "$tag" ]; then
+            abort "Failed to resolve latest version. Specify a version with --version."
+        fi
+        VERSION="$tag"
+    fi
+
+    # Normalize: ensure version starts with 'v'
+    case "$VERSION" in
+        v*) ;;
+        *)  VERSION="v${VERSION}" ;;
+    esac
+}
+
+# ------------------------------------------------------------------
+# verify_checksum: SHA256 verification
+# ------------------------------------------------------------------
+verify_checksum() {
+    local archive="$1" checksums_file="$2" archive_name="$3"
+
+    if [ "$INSECURE" = "true" ]; then
+        warn "Checksum verification is disabled (--insecure)."
+        return 0
+    fi
+
+    if [ ! -f "$checksums_file" ]; then
+        abort "Checksum file not available: ${checksums_file}"
+    fi
+
+    local expected
+    expected="$(awk -v target="$archive_name" '$2 == target {print $1}' "$checksums_file" | head -1)"
+    if [ -z "$expected" ]; then
+        abort "No checksum found for ${archive_name} in ${checksums_file}"
+    fi
+
+    local actual
+    if has_cmd sha256sum; then
+        actual="$(sha256sum "$archive" | awk '{print $1}')"
+    elif has_cmd shasum; then
+        actual="$(shasum -a 256 "$archive" | awk '{print $1}')"
+    else
+        abort "Neither sha256sum nor shasum found; cannot verify archive checksum."
+    fi
+
+    if [ "$expected" != "$actual" ]; then
+        abort "Checksum verification failed!\n  Expected: ${expected}\n  Actual:   ${actual}\nThe downloaded file may be corrupted or tampered with."
+    fi
+
+    info "Checksum verified (SHA-256)"
+}
+
+# ------------------------------------------------------------------
+# install_binary: extract archive and place binary
+# ------------------------------------------------------------------
+install_binary() {
+    local archive="$1" install_dir="$2" platform="$3"
+
+    mkdir -p "$install_dir"
+
+    local ext=""
+    [ "$platform" = "windows" ] && ext=".exe"
+
+    case "$archive" in
+        *.tar.gz)
+            tar xzf "$archive" -C "$install_dir" "${BIN_NAME}${ext}"
+            ;;
+        *.zip)
             need_cmd unzip
-            unzip -qo "${tmpdir}/${filename}" -d "$tmpdir"
+            unzip -oq "$archive" "${BIN_NAME}${ext}" -d "$install_dir"
+            ;;
+        *)
+            abort "Unknown archive format: $archive"
             ;;
     esac
 
-    local binary
-    binary="$(find "$tmpdir" -name "$BINARY_NAME" -type f | head -1)"
-    [ -n "$binary" ] || binary="$(find "$tmpdir" -name "${BINARY_NAME}.exe" -type f | head -1)"
-    [ -n "$binary" ] || error "解压后未找到 ${BINARY_NAME} 可执行文件"
-
-    chmod +x "$binary"
-
-    info "安装到 ${BOLD}${INSTALL_DIR}${RESET} ..."
-    mkdir -p "$INSTALL_DIR" 2>/dev/null || true
-
-    if [ -w "$INSTALL_DIR" ]; then
-        mv "$binary" "${INSTALL_DIR}/${BINARY_NAME}"
-    elif command -v sudo > /dev/null 2>&1; then
-        warn "需要管理员权限写入 ${INSTALL_DIR}"
-        sudo mv "$binary" "${INSTALL_DIR}/${BINARY_NAME}"
-    else
-        error "无法写入 ${INSTALL_DIR}，请使用 WPS365_INSTALL_DIR 指定其他目录"
-    fi
-
-    ok "安装完成！"
+    chmod +x "${install_dir}/${BIN_NAME}${ext}"
 }
 
-verify_install() {
-    if command -v "$BINARY_NAME" > /dev/null 2>&1; then
-        local installed_path
-        installed_path="$(command -v "$BINARY_NAME")"
-        ok "${BINARY_NAME} 已安装到 ${installed_path}"
+# ------------------------------------------------------------------
+# detect_profile: find the user's shell profile file
+# ------------------------------------------------------------------
+detect_profile() {
+    local shell_name
+    shell_name="$(basename "${SHELL:-/bin/sh}")"
 
-        local ver_output
-        ver_output="$("$BINARY_NAME" --version 2>/dev/null || echo '(无法获取版本)')"
-        info "版本: ${ver_output}"
-    else
-        warn "${BINARY_NAME} 已安装到 ${INSTALL_DIR}/${BINARY_NAME}"
-        warn "但 ${INSTALL_DIR} 不在 PATH 中"
-        echo ""
-        echo "  请将以下内容添加到你的 shell 配置文件 (~/.bashrc 或 ~/.zshrc):"
-        echo ""
-        echo "    export PATH=\"${INSTALL_DIR}:\$PATH\""
-        echo ""
-    fi
+    case "$shell_name" in
+        zsh)
+            local zshrc="${ZDOTDIR:-$HOME}/.zshrc"
+            if [ -f "$zshrc" ]; then
+                echo "$zshrc"
+            elif [ -f "$HOME/.zprofile" ]; then
+                echo "$HOME/.zprofile"
+            else
+                echo "$zshrc"
+            fi
+            ;;
+        bash)
+            if [ -f "$HOME/.bashrc" ]; then
+                echo "$HOME/.bashrc"
+            elif [ -f "$HOME/.bash_profile" ]; then
+                echo "$HOME/.bash_profile"
+            else
+                echo "$HOME/.bashrc"
+            fi
+            ;;
+        fish)
+            echo "${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
+            ;;
+        *)
+            if [ -f "$HOME/.profile" ]; then
+                echo "$HOME/.profile"
+            else
+                echo ""
+            fi
+            ;;
+    esac
 }
 
+# ------------------------------------------------------------------
+# configure_path: add install dir to PATH via shell profile
+# ------------------------------------------------------------------
+configure_path() {
+    local install_dir="$1"
+
+    # Already in PATH? Nothing to do.
+    case ":${PATH}:" in
+        *":${install_dir}:"*)
+            return 0
+            ;;
+    esac
+
+    if [ "$MODIFY_PATH" != "true" ]; then
+        warn "${install_dir} is not in your PATH. Add it manually:"
+        warn "  export PATH=\"${install_dir}:\$PATH\""
+        return 0
+    fi
+
+    local profile
+    profile="$(detect_profile)"
+    if [ -z "$profile" ]; then
+        warn "Could not detect shell profile. Add to your PATH manually:"
+        warn "  export PATH=\"${install_dir}:\$PATH\""
+        return 0
+    fi
+
+    local shell_name
+    shell_name="$(basename "${SHELL:-/bin/sh}")"
+
+    local path_line
+    if [ "$shell_name" = "fish" ]; then
+        path_line="set -gx PATH \"${install_dir}\" \$PATH"
+    else
+        path_line="export PATH=\"${install_dir}:\$PATH\""
+    fi
+
+    if [ -f "$profile" ] && grep -qF "$install_dir" "$profile" 2>/dev/null; then
+        return 0
+    fi
+
+    info "Adding ${install_dir} to PATH in ${profile}"
+    {
+        echo ""
+        echo "# wps365-cli"
+        echo "$path_line"
+    } >> "$profile"
+}
+
+# ------------------------------------------------------------------
+# print_summary
+# ------------------------------------------------------------------
+print_summary() {
+    local install_dir="$1" version="$2" profile="$3" bin_name="$4"
+
+    echo ""
+    printf "\033[1;32m✓\033[0m WPS 365 CLI %s installed to %s/%s\n" "$version" "$install_dir" "$bin_name"
+    echo ""
+
+    # Check if available in current session
+    case ":${PATH}:" in
+        *":${install_dir}:"*)
+            echo "  Run 'wps365-cli --version' to verify."
+            ;;
+        *)
+            if [ -n "$profile" ]; then
+                echo "  Restart your terminal or run:"
+                echo "    source ${profile}"
+            else
+                echo "  Add to your PATH:"
+                echo "    export PATH=\"${install_dir}:\$PATH\""
+            fi
+            ;;
+    esac
+
+    echo ""
+    echo "  快速开始:"
+    echo "    ${bin_name} config init            # 浏览器创建/绑定应用（仅需一次）"
+    echo "    ${bin_name} auth login --device    # 设备码授权（可省略 --scopes）"
+    echo "    ${bin_name} user me                # 确认当前登录用户"
+    echo ""
+    echo "  To uninstall:"
+    echo "    rm ${install_dir}/${bin_name}"
+    echo ""
+}
+
+# ------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------
 main() {
-    echo ""
-    printf "${BOLD}${CYAN}  WPS365 CLI Installer${RESET}\n"
-    echo "  ────────────────────"
+    parse_args "$@"
+
+    info "WPS 365 CLI Installer"
     echo ""
 
-    detect_platform
-    info "检测到平台: ${BOLD}${PLATFORM}${RESET}"
+    local platform arch target
+    platform="$(detect_platform)"
+    arch="$(detect_arch)"
+    target="$(resolve_target "$platform" "$arch")"
 
-    detect_version
-    download_and_install
-    verify_install
+    info "Detected platform: ${platform}/${arch} -> ${target}"
 
-    echo ""
-    printf "${GREEN}${BOLD}  快速开始:${RESET}\n"
-    echo "    ${BINARY_NAME} auth setup        # 配置 OAuth 客户端凭证"
-    echo "    ${BINARY_NAME} auth login        # 登录授权"
-    echo "    ${BINARY_NAME} user me           # 查看当前用户"
-    echo ""
+    resolve_version
+    info "Version: ${VERSION}"
+
+    # Archive name and extension
+    local archive_ext="tar.gz"
+    [ "$platform" = "windows" ] && archive_ext="zip"
+    local archive_name="${BIN_NAME}-${target}.${archive_ext}"
+
+    # Create temp dir with cleanup trap
+    TMP_DIR="$(mktemp -d)"
+    trap 'rm -rf "$TMP_DIR"' EXIT
+
+    # Download archive
+    local cdn_url="${CDN_BASE_URL}/${VERSION}/${archive_name}"
+    local gh_url="${GITHUB_BASE_URL}/${VERSION}/${archive_name}"
+    local archive_path="${TMP_DIR}/${archive_name}"
+
+    info "Downloading ${archive_name}..."
+    do_download_with_fallback "$cdn_url" "$gh_url" "$archive_path"
+
+    # Download and verify checksum
+    local checksums_path="${TMP_DIR}/checksums-sha256.txt"
+    local cdn_checksums="${CDN_BASE_URL}/${VERSION}/checksums-sha256.txt"
+    local gh_checksums="${GITHUB_BASE_URL}/${VERSION}/checksums-sha256.txt"
+
+    do_download_with_fallback "$cdn_checksums" "$gh_checksums" "$checksums_path"
+    verify_checksum "$archive_path" "$checksums_path" "$archive_name"
+
+    local ext=""
+    [ "$platform" = "windows" ] && ext=".exe"
+    local bin_name="${BIN_NAME}${ext}"
+
+    # Check for existing installation
+    local install_path="${INSTALL_DIR}/${bin_name}"
+    if [ -f "$install_path" ] && [ "$FORCE" != "true" ]; then
+        local existing_ver
+        existing_ver="$("$install_path" --version 2>/dev/null || echo "unknown")"
+        info "Existing installation found: ${existing_ver}"
+        info "Upgrading to ${VERSION}..."
+    fi
+
+    # Check write permission, use sudo if needed
+    local use_sudo=""
+    if [ -d "$INSTALL_DIR" ] && [ ! -w "$INSTALL_DIR" ]; then
+        warn "${INSTALL_DIR} is not writable. Using sudo..."
+        use_sudo="sudo"
+    elif [ ! -d "$INSTALL_DIR" ]; then
+        mkdir -p "$INSTALL_DIR" 2>/dev/null || {
+            warn "Cannot create ${INSTALL_DIR}. Using sudo..."
+            use_sudo="sudo"
+            $use_sudo mkdir -p "$INSTALL_DIR"
+        }
+    fi
+
+    # Extract to temp, then move (supports sudo)
+    local staging_dir="${TMP_DIR}/staging"
+    mkdir -p "$staging_dir"
+    install_binary "$archive_path" "$staging_dir" "$platform"
+
+    if [ -n "$use_sudo" ]; then
+        $use_sudo cp "${staging_dir}/${BIN_NAME}${ext}" "${INSTALL_DIR}/${BIN_NAME}${ext}"
+        $use_sudo chmod +x "${INSTALL_DIR}/${BIN_NAME}${ext}"
+    else
+        cp "${staging_dir}/${BIN_NAME}${ext}" "${INSTALL_DIR}/${BIN_NAME}${ext}"
+        chmod +x "${INSTALL_DIR}/${BIN_NAME}${ext}"
+    fi
+
+    info "Installed to ${INSTALL_DIR}/${BIN_NAME}${ext}"
+
+    # Configure PATH
+    local profile=""
+    configure_path "$INSTALL_DIR"
+    profile="$(detect_profile)"
+
+    print_summary "$INSTALL_DIR" "$VERSION" "$profile" "$bin_name"
 }
 
 main "$@"

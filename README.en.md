@@ -40,37 +40,37 @@ The official WPS 365 CLI tool — a command-line gateway for developers and AI A
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 ```
 
 **Windows (Git Bash)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
 ```
 
 macOS / Linux install to `~/.local/bin` by default (no sudo). Customize via environment variables:
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.5 bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_VERSION=v0.3.5 bash
 
 # Custom install directory
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
 ```
 
 ```powershell
 # PowerShell: Install a specific version
-$env:WPS365_VERSION="v0.3.5"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.5"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 
 # PowerShell: Custom install directory
-$env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_INSTALL_DIR="C:\tools"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 ```
 
 **Manual Download**

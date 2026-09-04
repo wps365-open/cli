@@ -40,37 +40,37 @@ WPS 365 官方 CLI 工具 — 面向开发者与 AI Agent 的命令行入口。�
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
 ```
 
 **Windows（PowerShell）**
 
 ```powershell
-irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 ```
 
 **Windows（Git Bash）**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | bash
 ```
 
 macOS / Linux 默认安装到 `~/.local/bin`（无需 sudo）。可通过环境变量自定义：
 
 ```bash
 # 安装指定版本
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_VERSION=v0.3.5 bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_VERSION=v0.3.5 bash
 
 # 自定义安装目录
-curl -fsSL https://raw.githubusercontent.com/wps365-open/cli/main/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
 ```
 
 ```powershell
 # PowerShell: 安装指定版本
-$env:WPS365_VERSION="v0.3.5"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.5"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 
 # PowerShell: 自定义安装目录
-$env:WPS365_INSTALL_DIR="C:\tools"; irm https://raw.githubusercontent.com/wps365-open/cli/main/install.ps1 | iex
+$env:WPS365_INSTALL_DIR="C:\tools"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 ```
 
 **手动下载**
