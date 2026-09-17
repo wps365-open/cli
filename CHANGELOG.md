@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-09-17
+
+### Added
+- `auth login --device`：在验证 URL 旁输出 ASCII 二维码（与 `config init` 相同；编码失败则省略码，仍打印 URL 并继续轮询）
+
+### Fixed
+- `config init`：验证链接改为 `https://`（不再打印 `http://open.wps.cn/...`），避免浏览器拦截明文 HTTP
+- Windows 安装：README / GitHub `install.ps1` 改为优先走国内 CDN（`latest.txt`），避免 GitHub API 403 后在 PowerShell 5.1 上因错误文案崩溃
+
 ## [0.3.5] - 2026-09-03
 
 ### Added
@@ -117,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README: outdated examples corrected (date, flags, API base URL)
 - README: added `auth token --app` usage; synced all changes to English README
 
-[Unreleased]: https://github.com/wps365-open/cli/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/wps365-open/cli/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/wps365-open/cli/releases/tag/v0.3.6
 [0.3.5]: https://github.com/wps365-open/cli/releases/tag/v0.3.5
 [0.3.4]: https://github.com/wps365-open/cli/releases/tag/v0.3.4
 [0.3.3]: https://github.com/wps365-open/cli/releases/tag/v0.3.3

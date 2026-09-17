@@ -59,7 +59,7 @@ macOS / Linux install to `~/.local/bin` by default (no sudo). Customize via envi
 
 ```bash
 # Install a specific version
-curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_VERSION=v0.3.5 bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_VERSION=v0.3.6 bash
 
 # Custom install directory
 curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -67,7 +67,7 @@ curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_INSTALL_DIR=~/.lo
 
 ```powershell
 # PowerShell: Install a specific version
-$env:WPS365_VERSION="v0.3.5"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.6"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 
 # PowerShell: Custom install directory
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex

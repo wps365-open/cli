@@ -59,7 +59,7 @@ macOS / Linux 默认安装到 `~/.local/bin`（无需 sudo）。可通过环境�
 
 ```bash
 # 安装指定版本
-curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_VERSION=v0.3.5 bash
+curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_VERSION=v0.3.6 bash
 
 # 自定义安装目录
 curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_INSTALL_DIR=~/.local/bin bash
@@ -67,7 +67,7 @@ curl -fsSL https://open-docs.wpscdn.cn/cli/install.sh | WPS365_INSTALL_DIR=~/.lo
 
 ```powershell
 # PowerShell: 安装指定版本
-$env:WPS365_VERSION="v0.3.5"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
+$env:WPS365_VERSION="v0.3.6"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
 
 # PowerShell: 自定义安装目录
 $env:WPS365_INSTALL_DIR="C:\tools"; irm https://open-docs.wpscdn.cn/cli/install.ps1 | iex
